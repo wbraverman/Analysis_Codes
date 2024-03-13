@@ -1,16 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import csv as csv
+import csv as csv 
 
-
-Fernandez_data = r"/home/wbrave1/Desktop/20Ne_data/ANL/new_sort/Fernandez_fig2.csv"
-
-with open(Fernandez_data) as csvfile:
-    lines = csvfile.readlines()[1:];
-    Fernandez_Energy = [float(i.split(',', 1)[0]) for i in lines[0:]];
-    Fernandez_Cross_Section = [float(i.split(',', 2)[1]) for i in lines[0:]];
-    
-cut_data = r"/home/wbrave1/Desktop/20Ne_data/ANL/new_sort/132MeV/Elastics/9.87kG/Beam_Elastic_Counts_cut.csv";
+cut_data = r"/home/wbrave1/Desktop/20Ne_data/ANL/new_sort/134MeV/Elastics/7.95kG/Beam_Elastic_Counts_cut.csv";
 
 with open(cut_data) as csvfile:
     lines = csvfile.readlines()[1:];
@@ -19,18 +11,18 @@ with open(cut_data) as csvfile:
     cut_ex_counts_132 = [round(float(i.split(',', 4)[3]), 0) for i in lines[0:]];
     cut_ex_error_132 = [round(float(i.split(',', 5)[4]), 0) for i in lines[0:]];
     
-PAlpha_data = r"/home/wbrave1/Desktop/20Ne_data/ANL/new_sort/132MeV/PAlpha/7.298kG/PAlpha_Counts.csv"
+    
+Fernandez_data = r"/home/wbrave1/Desktop/20Ne_data/ANL/new_sort/Fernandez_fig2.csv"
 
-with open(PAlpha_data) as csvfile:
+with open(Fernandez_data) as csvfile:
     lines = csvfile.readlines()[1:];
-    ring_num = [float(i.split(',', 1)[0]) for i in lines[0:]];
-    alpha_counts = [float(i.split(',', 2)[1]) for i in lines[0:]];
-    error = [float(i.split(',', 3)[2]) for i in lines[0:]];
-
-
-Beam_Energy = 132;
+    Fernandez_Energy = [float(i.split(',', 1)[0]) for i in lines[0:]];
+    Fernandez_Cross_Section = [float(i.split(',', 2)[1]) for i in lines[0:]];
+    
+    
+Beam_Energy = 134;
 Nucleons = 20;
-Beam_Energy_Per_Nucleon = Beam_Energy/Nucleons;
+Beam_Energy_Per_Nucleon = Beam_Energy/Nucleons-0.06;
 
 Energy = 0;
 Cross_Section = 0;
@@ -43,46 +35,48 @@ for i in range(len(Fernandez_Energy)):
 		Energy = Fernandez_Energy[i];
 		Cross_Section = Fernandez_Cross_Section[i];
 
-print('Energy: ', Energy);
-print('Fernandez Cross Section: ', Cross_Section);
+print('Fernandez Energy: ', Energy);
+print('Fernandez Differential Cross Section (mb): ', Cross_Section);
 
-# Elastics Runs
+#Fernandez plots done at 165 degrees in lab frame, which is about 7.946 degrees CM frame. Lands on ring 3, will take rings 1 thru 5
+Fernandez_gs_ring_counts = [cut_gs_counts_132[i] for i in range(1, 6)];
+Fernandez_ex_ring_counts = [cut_ex_counts_132[i] for i in range(1, 6)];
 
-d_omega1 = 2*np.pi*(1-np.cos(169.937*np.pi/180)) - 2*np.pi*(1 - np.cos(163.648*np.pi/180)); #rings 0 thru 4 
+#beam_current = 12-13 epA, should probably still assume 33% transmission
+charge_state = 10; # Assuming Ne is fully stripped
+elec_charge = 1.6*10**(-19); # coulomb
+#pps = beam_current / (charge_state*elec_charge*10**(12));
 
-Proton_Counts = cut_gs_counts_132[0]+cut_gs_counts_132[1]+cut_gs_counts_132[2]+cut_gs_counts_132[3]+cut_gs_counts_132[4];
+runtime =  1833; # entry 243 states 15 to 20 min, but I had this 1833 input from what I could pull scalars, so this is what I will stick with. 
+#beam_particles = pps*runtime; # in ions
 
-Beam_Current = (Proton_Counts/(Cross_Section*d_omega1))*10**(27);
+target_thickness = 285*10**(-6); # g/cm^2 from elog entry 226
+methylene_molar_mass = 14.0266; #g/mol
+PolypropeleneMolMass = methylene_molar_mass*3;
+hydrogen_nuclei = (target_thickness/methylene_molar_mass)*(6.0221408*10**(23))*2; # Results in a number that agrees with LISE
 
-print("Beam Intensity*Target Thickness*Time: ", Beam_Current);
+d_omega = 2*np.pi*(1-np.cos(168.673*np.pi/180)) - 2*np.pi*(1 - np.cos(162.381*np.pi/180)); #rings 1 to 5
 
-# Beam Intensity check
+BeamCurrent = (sum(Fernandez_gs_ring_counts)/((Cross_Section*10**(-27))*runtime*hydrogen_nuclei*d_omega))*(charge_state*elec_charge*10**12)
 
-elec_charge = 1.9*10**(-19);
-charge_state = 10; 
-target_thickness = 285*10**(-6); # g/cm^2
-methylene_molar_mass = 14.0266; # g/mol
-mol = 6.022*10**23; 
+print('H atoms per cm^2: ', hydrogen_nuclei)
+print('Time Correlated Proton Count: ', sum(Fernandez_gs_ring_counts))
+print('Solid Angle Coverage Rings 1 to 5: ', d_omega)
+print('Beam Current (epA): ', BeamCurrent)
 
-time = 4*60*60; # 4 runs, I'm just taking them to be an hour each for now, should check log book.
 
-BC_check = (Beam_Current*(charge_state*elec_charge*10**(12)) / ((target_thickness / methylene_molar_mass)*mol*2))/time;
+'''
+# d_omega = 2*np.pi*(1 - np.cos((15*np.pi/180) - (5*np.pi/180))); # should be about 3 quarters of a steradian, will need to figure out how that out
 
-print('Beam Current (epA): ', BC_check)
+cross_section_ex = (sum(Fernandez_ex_ring_counts)/(hydrogen_nuclei*beam_particles*d_omega))*10**(27);
+cross_section_gs = (sum(Fernandez_gs_ring_counts)/(hydrogen_nuclei*beam_particles*d_omega))*10**(27);
+cross_section_total = (sum(Fernandez_gs_ring_counts)+sum(Fernandez_ex_ring_counts))/(hydrogen_nuclei*beam_particles*d_omega)*10**(27); # denominator should be on order 10^29
 
-# (p, alpha) runs
+print('20Ne(p, p)20Ne* Cross Section (mb): ', cross_section_ex, '\n');
+print('20Ne(p, p)20Ne Cross Section (mb): ', cross_section_gs, '\n');
+print('Total Cross Section (mb): ', cross_section_total);
+'''
 
-ring_cm_angles_deg = [23.821, 26.898, 30.013, 33.173, 36.386, 39.66, 43.008, 46.441, 49.976, 53.635, 57.443, 61.439, 65.676, 70.234, 75.25, 80.979, 88.055];
-ring_cm_angles = [ring_cm_angles_deg[i]*(np.pi/180) for i in range(len(ring_cm_angles_deg))]
-ring_solid_angles = [2*np.pi*(np.cos(ring_cm_angles[i-1]) - np.cos(ring_cm_angles[i])) for i in range(1, len(ring_cm_angles))]
-
-PAlpha_diff_cs = [(alpha_counts[i]/(Beam_Current*ring_solid_angles[i]))*10**27 for i in range(len(alpha_counts))];
-
-PAlpha_Rsum = [PAlpha_diff_cs[i]*np.sin((ring_cm_angles[i+1] + ring_cm_angles[i])/2)*(ring_cm_angles[i+1] - ring_cm_angles[i]) for i in range(len(PAlpha_diff_cs))];
-
-PAlpha_cs = 2*np.pi*sum(PAlpha_Rsum);
-
-print('(p, alpha) cross section (mb): ', PAlpha_cs)
 
 
 
