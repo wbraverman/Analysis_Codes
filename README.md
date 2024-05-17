@@ -19,3 +19,18 @@ DataFit.cpp is an automated fitting function. Will need to run Beam_Elastics_Cou
 PAlpha_Counts.cpp is a very rudimentary script to retrieve alpha counts in specified energy regions. Uses Tac cut data and takes all counts within specified energy regions, rings are grouped together as specified by user and then energy regions are specified and applied to user defined ring groups. 
 
 sortGW.sh is a sorting code to turn raw binary files into ROOT Files. At the moment I believer you need tobe connected to ANL servers to run.
+
+5/17/24
+__________________________________________________
+
+Added a couple files with similar names. First:
+
+BeamCurrentAvg.py
+
+This file calculates the average beam current over several rings by calculating beam currents for Fernandez differential cross sections in a small energy range. It calculate the average for a group of rings and it also calculates the beam current measure by individual rings.
+
+Second:
+
+Raw_DataFit.cpp
+
+Very similar to DataFit.cpp, but this uses a slightly different integration scheme and adds a couple extra columns of data to the output spreadsheet.
