@@ -34,3 +34,12 @@ Second:
 Raw_DataFit.cpp
 
 Very similar to DataFit.cpp, but this uses a slightly different integration scheme and adds a couple extra columns of data to the output spreadsheet.
+
+5/21/24
+___________________________________________________
+
+Uploaded a more appropriately names cross section calculation file name:
+
+CrossSectionCalc.py
+
+This uses the new integration scheme we have for the Fernandez data and has just some general updates over the old file. USE THIS FILE, NOT THE OLD ONE!
