@@ -40,6 +40,11 @@ ___________________________________________________
 
 Uploaded a more appropriately names cross section calculation file name:
 
+4/18/25
+___________________________________________________
+
+In desperate need of updating and cleaning. This is just an upload of a class file I have made to organize everything. Most other files are obsolete, this is really the only one in here that matters anymore.
+
 CrossSectionCalc.py
 
 This uses the new integration scheme we have for the Fernandez data and has just some general updates over the old file. USE THIS FILE, NOT THE OLD ONE!
