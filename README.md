@@ -14,11 +14,11 @@ Make_Cuts.cpp should be run in order to make appropriate TAC and Front Back cuts
 
 Cuts_Analysis.cpp provides visuals for all cut data
 
-DataFit.cpp is an automated fitting function. Will need to run Beam_Elastics_Counts.cpp first to generate histos on low energy regions from high-B field runs with and without TAC cut. Notes for how to use DataFit.cpp are in file. To use, just run .x DataFit.cpp in ROOT environment.
+DataFit.cpp is an automated fitting function. Will need to run Beam_Elastics_Counts.cpp first to generate histos on low energy regions from runs with and without TAC cut. Notes for how to use DataFit.cpp are in file. To use, just run .x DataFit.cpp in ROOT environment.
 
 PAlpha_Counts.cpp is a very rudimentary script to retrieve alpha counts in specified energy regions. Uses Tac cut data and takes all counts within specified energy regions, rings are grouped together as specified by user and then energy regions are specified and applied to user defined ring groups. 
 
-sortGW.sh is a sorting code to turn raw binary files into ROOT Files. At the moment I believer you need tobe connected to ANL servers to run.
+sortGW.sh is a sorting code to turn raw binary files into ROOT Files. At the moment I believe you need tobe connected to ANL servers to run.
 
 5/17/24
 __________________________________________________
@@ -43,8 +43,5 @@ Uploaded a more appropriately names cross section calculation file name:
 4/18/25
 ___________________________________________________
 
-In desperate need of updating and cleaning. This is just an upload of a class file I have made to organize everything. Most other Python files are obsolete, this is really the only one in here that matters anymore.
+In need of updating and cleaning. This is just an upload of a class file (AlphaCalcsClass.py) I have made to organize everything. Most other Python files are obsolete, this is really the only one in here that matters anymore.
 
-CrossSectionCalc.py
-
-This uses the new integration scheme we have for the Fernandez data and has just some general updates over the old file. USE THIS FILE, NOT THE OLD ONE!
