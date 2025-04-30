@@ -1,22 +1,20 @@
-# I am getting tired of the mess in these alpha calculation files. Time to do something about it.
-
 import numpy as np
 import csv as csv
 import matplotlib.pyplot as plt
+import os.path
+import math
 
-class BeamCurrentCalc:
 
+class Constants:
 
+	# just a class for storing constants
+
+	def __init__(self):
 	
-	
-	def __init__(self): 
-	
-		#self.NeMass = 20.    
-		#self.HMass = 1.
-		
-		# When we get more precise about beam energy uncertainties and such I will start using ion masses. For now passing through with amu = 20 & 1 should be fine
 		self.NeMass = 19.992 # 9+
 		self.HMass = 1.00728 
+		self.HeMass = 4.0026
+		self.FMass = 17.0021
 		
 		# According to https://linac96.web.cern.ch/Compendium/COMPENDI.PDF, it seems like the FWHM of the LINAC beam is 0.04%. This would be a sigma of 0.0004/2.355 = 0.00017. Meaning the beam 
 		# enegy will most likely be BeamEnergy +- 0.00034*BeamEnergy (most data in a bell curve falls within 2 sigma of the average). Need to verify with Catherine.
@@ -38,6 +36,19 @@ class BeamCurrentCalc:
 		self.MethyleneMolarMass = 14.0266; #g/mol
 		self.PolypropelenMolarMass = 3*self.MethyleneMolarMass;
 		
+		self.NeGSspin = 0;
+		self.HeGSspin = 0;
+		self.FGSspin = 2.5;
+		self.Hspin = 0.5;
+		
+		self.QVal = -4.13; # MeV
+		
+		self.Boltzmann = 8.6173324*10**(-2) # MeV/GK
+		
+
+class BeamCurrentCalc:
+
+	# retrieve energy loss	
 	def GetEnergyLoss(self, BeamEnergyInput):
 	
     		
@@ -69,7 +80,7 @@ class BeamCurrentCalc:
 			
 		return EnergyLoss
 		
-		
+	# retrieve runtimes. Need to get more accuurate runtimes from ANL computers	
 	def GetRuntime(self, BeamEnergyInput):
 	
 		if BeamEnergyInput == 120:
@@ -96,7 +107,7 @@ class BeamCurrentCalc:
 		
 		return runtime
 		
-		
+	# retrieve target thickness	
 	def GetTargetThickness(self, BeamEnergyInput):
 	
 		if BeamEnergyInput == 117:
@@ -125,7 +136,7 @@ class BeamCurrentCalc:
 		
 		return target_thickness
 			
-	
+	# normalize beam current from observed proton elastic scatters to Fernandez data
 	def GetFernandezData(self, BeamEnergyInput, Diagnostic=False):
     		
 		FernandezCS = []
@@ -135,7 +146,7 @@ class BeamCurrentCalc:
 
 		with open(Fernandez_data) as csvfile:
 			lines = csvfile.readlines()[1:];
-			FernandezFig2Energy = [round((float(i.split(',', 1)[0]))/self.HMass, 3) for i in lines[:]];
+			FernandezFig2Energy = [round((float(i.split(',', 1)[0]))/Constants().HMass, 3) for i in lines[:]];
 			FernandezFig2CrossSection = [round(float(i.split(',', 2)[1]), 3) for i in lines[:]];
     		
     		
@@ -171,6 +182,7 @@ class BeamCurrentCalc:
 			
 		elif BeamEnergyInput == 152.4:
 			ProtonElasticsFile = r'/home/wbrave1/Desktop/20Ne_data/ANL/new_sort/152.4MeV/7.6kG/Beam_Elastic_Counts_raw.csv'
+			
 		else:
 			print('No data for this energy.')
 			return 0
@@ -178,10 +190,10 @@ class BeamCurrentCalc:
 			
 		with open(ProtonElasticsFile) as csvfile:
 			lines = csvfile.readlines()[1:];
-			GScounts = [round(float(i.split(',', 2)[1]), 0) for i in lines[self.Fernandez165RingStart: self.Fernandez165RingStop + 1]];
-			GSerror = [round(float(i.split(',', 3)[2]), 0) for i in lines[self.Fernandez165RingStart: self.Fernandez165RingStop + 1]];
-			EXcounts = [round(float(i.split(',', 4)[3]), 0) for i in lines[self.Fernandez165RingStart: self.Fernandez165RingStop + 1]];
-			EXerror = [round(float(i.split(',', 5)[4]), 0) for i in lines[self.Fernandez165RingStart: self.Fernandez165RingStop + 1]];
+			GScounts = [round(float(i.split(',', 2)[1]), 0) for i in lines[Constants().Fernandez165RingStart: Constants().Fernandez165RingStop + 1]];
+			GSerror = [round(float(i.split(',', 3)[2]), 0) for i in lines[Constants().Fernandez165RingStart: Constants().Fernandez165RingStop + 1]];
+			EXcounts = [round(float(i.split(',', 4)[3]), 0) for i in lines[Constants().Fernandez165RingStart: Constants().Fernandez165RingStop + 1]];
+			EXerror = [round(float(i.split(',', 5)[4]), 0) for i in lines[Constants().Fernandez165RingStart: Constants().Fernandez165RingStop + 1]];
 			
 			
 		runtime = self.GetRuntime(BeamEnergyInput)
@@ -190,8 +202,8 @@ class BeamCurrentCalc:
 			
 		EnergyLoss = self.GetEnergyLoss(BeamEnergyInput)
     			
-		MaxEnergy = round(BeamEnergyInput/self.NeMass, 3)
-		MinEnergy = round((BeamEnergyInput - EnergyLoss) / self.NeMass, 3)
+		MaxEnergy = round(BeamEnergyInput/Constants().NeMass, 3)
+		MinEnergy = round((BeamEnergyInput - EnergyLoss) / Constants().NeMass, 3)
     		
 		for i in range(len(FernandezFig2Energy)):
 			if FernandezFig2Energy[i] <= MaxEnergy and FernandezFig2Energy[i] >= MinEnergy:
@@ -205,7 +217,7 @@ class BeamCurrentCalc:
 		CManglesElastic = np.array(CManglesElastic)
 		CManglesElastic = CManglesElastic*(np.pi/180)
 		
-		Domega = round(2*np.pi*(np.cos(CManglesElastic[self.Fernandez165RingStop + 1]) - np.cos(CManglesElastic[self.Fernandez165RingStart])), 3)
+		Domega = round(2*np.pi*(np.cos(CManglesElastic[Constants().Fernandez165RingStop + 1]) - np.cos(CManglesElastic[Constants().Fernandez165RingStart])), 3)
 		
 		CurrentTargetTime = [sum(GScounts) / (FernandezCS[i] * Domega) for i in range(len(FernandezCS))]
 		CurrentTargetTime = np.array(CurrentTargetTime)
@@ -218,10 +230,10 @@ class BeamCurrentCalc:
 		
 		AverageCurrentTargetTimeError = sum(CurrentTargetTimeError) / len(CurrentTargetTimeError)
 		
-		HydrogenAtoms = round((target_thickness/self.MethyleneMolarMass)*self.Mol*2, 3)
+		HydrogenAtoms = round((target_thickness/Constants().MethyleneMolarMass)*Constants().Mol*2, 3)
 				
-		AverageBeamCurrent = round((AverageCurrentTargetTime / (runtime*HydrogenAtoms*(10**(-27))))*(self.NeChargeState*self.ElectronCharge*10**12), 2)
-		AverageBeamCurrentError = round((AverageCurrentTargetTimeError / (runtime*HydrogenAtoms*(10**(-27))))*(self.NeChargeState*self.ElectronCharge*10**12), 2)
+		AverageBeamCurrent = round((AverageCurrentTargetTime / (runtime*HydrogenAtoms*(10**(-27))))*(Constants().NeChargeState*Constants().ElectronCharge*10**12), 2)
+		AverageBeamCurrentError = round((AverageCurrentTargetTimeError / (runtime*HydrogenAtoms*(10**(-27))))*(Constants().NeChargeState*Constants().ElectronCharge*10**12), 2)
 		
 		if Diagnostic:
 		
@@ -231,9 +243,9 @@ class BeamCurrentCalc:
 			print('Runtime: ', runtime, ' seconds')
 			print('Hydrogen Atoms: ', HydrogenAtoms)
 			print('Solid Angle: ', Domega, ' str')
-			print('Neon Charge State: ', self.NeChargeState)
-			print('Neon Mass: ', self.NeMass, ' Daltons')
-			print('Hydrogen Mass: ', self.HMass, ' Daltons')
+			print('Neon Charge State: ', Constants().NeChargeState)
+			print('Neon Mass: ', Constants().NeMass, ' Daltons')
+			print('Hydrogen Mass: ', Constants().HMass, ' Daltons')
 			print('Average Beam Current: ', AverageBeamCurrent, ' epA')
 			print('Avegage Beam Current Error: ', AverageBeamCurrentError, ' epa')
 			print('Fernandez Energies (MeV/u): ')
@@ -246,15 +258,13 @@ class BeamCurrentCalc:
 			for i in range(len(FernandezCS)):
 				print(FernandezCS[i])
 			
-			
-		
-		  		
+					  		
 		return AverageCurrentTargetTime, AverageCurrentTargetTimeError
 		
 	
 	
 	
-	
+	# calculate efficiency of detection from Monte Carlo results
 	def SingleRingEff(self, BeamEnergy, RingStart, RingStop, ExcitedState = False, PrintEff = False, RingByRing = False):
 	
 		if BeamEnergy == 128:
@@ -352,7 +362,7 @@ class BeamCurrentCalc:
 		
 			return SubRingEff
 			
-	
+	# retreive center of mass angles for each ring
 	def GetCMAngles(self, BeamEnergy):
 	
 	
@@ -404,7 +414,7 @@ class BeamCurrentCalc:
 	
 	
 	
-	
+	# calculate solid angle of individual rings or group of them in center of mass frame
 	def SolidAngleCalc(self, BeamEnergy, StartRing, StopRing, RingByRing = False):
 	
 	
@@ -468,7 +478,7 @@ class BeamCurrentCalc:
 			return SolidAngle
 		
 	
-	
+	# calculate solid angle in lab frame
 	def GetLabSolidAngle(self, StartRing, StopRing, RingByRing = False):
 		
 		LabAnglesRad = [(5 + 0.625*i) * (np.pi/180) for i in range(0, 17)]
@@ -493,7 +503,7 @@ class BeamCurrentCalc:
 	
 	
 	
-	
+	# calculate solid angle for excited state reactions
 	def ExSolidAngleCalc(self, BeamEnergy, StartRing, StopRing):
 	
 		
@@ -522,7 +532,8 @@ class BeamCurrentCalc:
 		
 		
 		
-		
+	# method to get beam current of runs where proton scattering cross section is low. This method will normalize the current from other runs with appreciable proton scattering cross sections
+	# where we can calculate a beam current from Fernandez data. Takes an unspecified number of other runs to scale to.	
 	def GetSatPeakCounts(self, BeamEnergy, *ScaleTo, Diagnostic=False):
 	
 		
@@ -544,8 +555,8 @@ class BeamCurrentCalc:
 		
 		with open(FilePath) as csvfile:
 			lines = csvfile.readlines()[1:]
-			SatPeakCounts = [round(float(i.split(',', 2)[1]), 0) for i in lines[self.SatPeakRingStart:self.SatPeakRingStop+1]]
-			SatPeakCountsError = [round(float(i.split(',', 3)[2]), 0) for i in lines[self.SatPeakRingStart:self.SatPeakRingStop+1]];
+			SatPeakCounts = [round(float(i.split(',', 2)[1]), 0) for i in lines[Constants().SatPeakRingStart:Constants().SatPeakRingStop+1]]
+			SatPeakCountsError = [round(float(i.split(',', 3)[2]), 0) for i in lines[Constants().SatPeakRingStart:Constants().SatPeakRingStop+1]];
 		
 		
 		
@@ -575,8 +586,8 @@ class BeamCurrentCalc:
 			
 			with open(FilePathScaleTo) as csvfile:
 				lines = csvfile.readlines()[1:]
-				SatPeakCountsScaleTo = [round(float(i.split(',', 2)[1]), 0) for i in lines[self.SatPeakRingStart:self.SatPeakRingStop+1]];
-				SatPeakCountsErrorScaleTo = [round(float(i.split(',', 3)[2]), 0) for i in lines[self.SatPeakRingStart:self.SatPeakRingStop+1]];
+				SatPeakCountsScaleTo = [round(float(i.split(',', 2)[1]), 0) for i in lines[Constants().SatPeakRingStart:Constants().SatPeakRingStop+1]];
+				SatPeakCountsErrorScaleTo = [round(float(i.split(',', 3)[2]), 0) for i in lines[Constants().SatPeakRingStart:Constants().SatPeakRingStop+1]];
 				
 				
 				
@@ -602,11 +613,11 @@ class BeamCurrentCalc:
 			
 		if Diagnostic:
 			
-			HydrogenAtoms = round((target_thickness/self.MethyleneMolarMass)*self.Mol*2, 3) 
+			HydrogenAtoms = round((target_thickness/Constants().MethyleneMolarMass)*Constants().Mol*2, 3) 
 			
-			AvgBeamCurrent = round((AvgSatPeakCurrentTargetTime / (runtime*HydrogenAtoms*(10**(-27))))*(self.NeChargeState*self.ElectronCharge*10**12), 2)
+			AvgBeamCurrent = round((AvgSatPeakCurrentTargetTime / (runtime*HydrogenAtoms*(10**(-27))))*(Constants().NeChargeState*Constants().ElectronCharge*10**12), 2)
 				
-			AvgBeamCurrentError = round((AvgSatPeakError / (runtime*HydrogenAtoms*(10**(-27))))*(self.NeChargeState*self.ElectronCharge*10**12), 2)
+			AvgBeamCurrentError = round((AvgSatPeakError / (runtime*HydrogenAtoms*(10**(-27))))*(Constants().NeChargeState*Constants().ElectronCharge*10**12), 2)
 				
 			print('Beam current from saturation peaks: ', AvgBeamCurrent, ' epa')
 				
@@ -621,7 +632,7 @@ class BeamCurrentCalc:
 class CSCalc:
 
 
-
+	# method to retrieve alpha counts from any run
 	def GetAlphaCounts(self, BeamEnergy, StartRing, StopRing):
 		
 		
@@ -661,7 +672,7 @@ class CSCalc:
 		
 		
 		
-		
+	# method to retrieve excited state alpha counts from different beam energy runs	
 	def GetExAlphaCounts(self, BeamEnergy, StartRing, StopRing):
 	
 	
@@ -688,7 +699,7 @@ class CSCalc:
 		
 		
 		
-	
+	# Calculate differential cross section from Fernandez normalization and saturation peak normalization
 	def GetDiffCS(self, BeamEnergy, StartRing, StopRing, CMFrame=True, SatPeakNorm=False):
 	
 	
@@ -727,7 +738,7 @@ class CSCalc:
 		return DiffCS
 		
 		
-		
+	# rudimentary riemann sum of differential cross sections to get total cross section	
 	def GetTotalCS(self, BeamEnergy, StartRing, StopRing):
 	
 		if BeamEnergy == 137 or BeamEnergy == 141 or BeamEnergy == 143 or BeamEnergy == 152.4:
@@ -748,7 +759,7 @@ class CSCalc:
 		return TotalCS
 		
 		
-		
+	# Calculate error in differential cross section from both Fernandez normalization and saturation peak normalization	
 	def GetRingDiffCSError(self, BeamEnergy, StartRing, StopRing, SatPeakNorm = False):   # Error from beam current calculation and alpha diff cs calculation added in quaderature
 	
 	
@@ -778,7 +789,7 @@ class CSCalc:
 		return TotalRingError
 		
 	
-	
+	# Calculate rudimentary error for total cross section from differential cross section error calculations.
 	def GetRingTotalCSError(self, BeamEnergy, StartRing, StopRing):
 	
 		
@@ -798,15 +809,31 @@ class CSCalc:
 		return TotalCSError
 		
 		
-	# Well it seems we are again at the point we are saying fuck all to this beam current shit. It is what it is. I guess now its time to split the difference between the logbook and what I calculate. That's awesome becuase now I have to rely on the runtimes recorded in the ELOG to make cross section calculations. That's extra awesome because I still have no path for getting exact times. Not only was I not able to get the scalars file to print it before, but now I can't even SSH with my own login info. So fuck me I guess. It is what it is I guess. Just another stupid time waste of an excercise for the sake of it. Maybe one day this will all come to an end.
-
-	
+	# Method to calculate differntial cross section from predetermined beam current values. We need to approach how we calculate beam currents from Fernandez data with more scutiny, This 
+	# method is a stand in until that time.
 	def GetDiffCSFromBC(self, BeamEnergy, StartRing, StopRing):
 	
-
-		if BeamEnergy == 132:
+		if BeamEnergy == 128:
+			current = 13
+			current_error = 4
+		elif BeamEnergy == 130:
+			current = 11.5
+			current_error = 2.5
+		elif BeamEnergy == 132:
 			current = 14 # epa
 			current_error = 3.5
+		elif BeamEnergy == 137:
+			current = 18.5
+			current_error = 5.5
+		elif BeamEnergy == 141:
+			current = 14
+			current_error = 5
+		elif BeamEnergy == 143:
+			current = 72.5
+			current_error = 12.5
+		elif BeamEnergy == 149:
+			current = 12.5
+			current_error = 2.5
 		else:
 			print('No data for this energy.')
 			return 0
@@ -820,11 +847,11 @@ class CSCalc:
 		
 		RingEff = BeamCurrentCalc().SingleRingEff(BeamEnergy, StartRing, StopRing, ExcitedState = False, PrintEff = False, RingByRing = True)
 		
-		HydrogenAtoms = round((target_thickness/BeamCurrentCalc().MethyleneMolarMass)*BeamCurrentCalc().Mol*2, 3)
+		HydrogenAtoms = round((target_thickness/Constants().MethyleneMolarMass)*Constants().Mol*2, 3)
 		
-		BeamParticles = (current / (BeamCurrentCalc().NeChargeState*BeamCurrentCalc().ElectronCharge*10**12)) * runtime
+		BeamParticles = (current / (Constants().NeChargeState*Constants().ElectronCharge*10**12)) * runtime
 		
-		BeamParticlesError = (current_error / (BeamCurrentCalc().NeChargeState*BeamCurrentCalc().ElectronCharge*10**12)) * runtime
+		BeamParticlesError = (current_error / (Constants().NeChargeState*Constants().ElectronCharge*10**12)) * runtime
 			
 		###################################################################################
 		
@@ -849,14 +876,58 @@ class CSCalc:
 		
 		return DiffCS, ErrorDiffCS
 		
-
+	
+	# Calculates 20Ne(p,a) differential cross section in lab frame. Jacobians retrieved from RELKIN.
 	def GetLabDiffCS(self, BeamEnergy, StartRing, StopRing):
 	
-		if BeamEnergy == 132:
+		
+		if BeamEnergy == 128:
+		
+			MidPointLabAngle = [148.17, 144.37, 140.55, 136.71, 132.82, 128.90, 124.92, 120.86]
+			
+			Jacobian = [1.4390, 1.4170, 1.3933, 1.3679, 1.3408, 1.3124, 1.2827, 1.2518]
+			
+		elif BeamEnergy == 130:
+		
+			MidPointLabAngle = [148.67, 144.95, 141.19, 137.41, 133.59, 129.73, 125.82, 121.85]
+			
+			Jacobian = [1.4325, 1.4118, 1.3891, 1.3649, 1.3391, 1.3120, 1.2837, 1.2542]					
+		
+		elif BeamEnergy == 132:
 			
 			MidPointLabAngle = [149.15, 145.47, 141.79, 138.06, 134.31, 130.52, 126.68, 122.77, 118.78, 114.71]
 			
 			Jacobian = [1.4265, 1.4067, 1.3852, 1.3620, 1.3375, 1.3116, 1.2845, 1.2561, 1.2268, 1.1964]
+			
+		elif BeamEnergy == 134:
+		
+			MidPointLabAngle = [149.59, 145.98, 142.33, 138.67, 134.97, 131.23, 127.46, 123.62, 119.71, 115.72]
+			
+			Jacobian = [1.4209, 1.4020, 1.3814, 1.3814, 1.3593, 1.3357, 1.3109, 1.2849, 1.2577, 1.2295, 1.2004]
+			
+		elif BeamEnergy == 137:
+		
+			MidPointLabAngle = [150.20, 146.64, 143.08, 139.48, 135.87, 132.22, 128.52, 124.79, 120.97, 117.08]
+			
+			Jacobian = [1.4131, 1.3953, 1.3760, 1.3551, 1.3330, 1.3096, 1.2851, 1.2595, 1.2328, 1.2053]
+			
+		elif BeamEnergy == 141:
+		
+			MidPointLabAngle = [150.91, 147.44, 143.97, 140.47, 136.95, 133.39, 129.80, 126.16, 122.46, 118.70, 114.85, 110.87, 106.77, 102.46, 97.90, 92.94]
+			
+			Jacobian = [1.4036, 1.3872, 1.3693, 1.3500, 1.3295, 1.3077, 1.2849, 1.2610, 1.2361, 1.2104, 1.1838, 1.1562, 1.1277, 1.0982, 1.0674, 1.0348]
+			
+		elif BeamEnergy == 143:
+		
+			MidPointLabAngle = [151.22, 147.81, 144.37, 140.91, 137.43, 133.90, 130.36, 126.76, 123.13, 119.41]
+			
+			Jacobian = [1.3993, 1.3835, 1.3662, 1.3476, 1.3277, 1.3066, 1.2845, 1.2614, 1.2374, 1.2123]
+			
+		elif BeamEnergy == 149:
+		
+			MidPointLabAngle = [152.06, 148.74, 145.41, 142.06, 138.67, 135.27, 131.84, 128.37, 124.85, 121.28, 117.64, 113.92, 110.08, 106.11]
+			
+			Jacobian = [1.3875, 1.3732, 1.3575, 1.3405, 1.3224, 1.3032, 1.2830, 1.2618, 1.2397, 1.2168, 1.1931, 1.1686, 1.1432, 1.1171]
 			
 		else:
 		
@@ -876,7 +947,8 @@ class CSCalc:
 		
 class CSPlot:
 		
-		
+	
+	# Plots 20Ne(p,a) differential cross section in CoM Frame	
 	def GSDiffCSPlot(self, BeamEnergy, StartRing, StopRing, SatPeakNorm = False):
 	
 		SolidAngles, MidpointAngles = BeamCurrentCalc().SolidAngleCalc(BeamEnergy, StartRing, StopRing, RingByRing = True)
@@ -906,7 +978,7 @@ class CSPlot:
 		
 class CSVwriter:
 
-	
+	# Simple method for outputting csv file for an unspecified number of columns
 	def write_arrays_to_csv(self, filename, *arrays, headers=None):
 
 		with open(filename, 'w', newline='') as csvfile:
@@ -919,6 +991,7 @@ class CSVwriter:
 				writer.writerow(row)
 
 	
+	# Write csv file with relevant information for beam current calculations from Fernandez differential cross sections
 	def CalculationParameters(self, BeamEnergy, StartRing, StopRing, SatPeakNorm=False):
 	
 		RingNumber = [i for i in range(StartRing, StopRing+1)]
@@ -956,36 +1029,210 @@ class CSVwriter:
 
 class AZUREWriter:
 
+	# Writes input file for AZURE, specifically for differential cross section calculations 
+	def InputFile(self, BeamEnergy, StartRing, StopRing, Yield=False):
 	
-	def InputFile(self, BeamEnergy, StartRing, StopRing):
+		if BeamEnergy == 128:
+			TargetAtoms = 5.10*10**19
+		elif BeamEnergy == 130:
+			TargetAtoms = 5.39*10**19
+		elif BeamEnergy == 132:
+			TargetAtoms = 5.41*10**19
+		elif BeamEnergy == 137:
+			TargetAtoms = 5.42*10**19
+		elif BeamEnergy == 141:
+			TargetAtoms = 4.92*10**19
+		elif BeamEnergy == 143:
+			TargetAtoms = 4.93*10**19
+		elif BeamEnergy == 149:
+			TargetAtoms = 4.9*10**19
+		else:
+			print('No data for this energy.')
+			return 0
 	
+		
+		BarnToCmSquared = 10**(-24)
 		
 		LabDiffCS, LabErrorDiffCS, LabMidAngle = CSCalc().GetLabDiffCS(BeamEnergy, StartRing, StopRing)
 		
-		LabDiffCSBarn = LabDiffCS/1000
+		# Convert from mB to B
+		LabDiffCSBarn = LabDiffCS/1000 
 		
-		LabErrorDiffCSBarn = LabErrorDiffCS/1000
+		# Convert from mB to B
+		LabErrorDiffCSBarn = LabErrorDiffCS/1000 
 		
-		AZUREEnergy = round(((BeamEnergy - (BeamCurrentCalc().GetEnergyLoss(BeamEnergy)/2)) / BeamCurrentCalc().NeMass) * BeamCurrentCalc().HMass , 3)
-			
-		EnergyIndex = [AZUREEnergy for i in range(len(LabDiffCS))]
+		# Convert to yield for Target Effect Calculations
+		LabDiffCSYield = LabDiffCSBarn*TargetAtoms*BarnToCmSquared
 		
-		CSFormatted = ['{:.3e}'.format(LabDiffCSBarn[x]) for x in range(len(LabDiffCSBarn))]
-			
-		CSErrorFormatted = ['{:.3e}'.format(LabErrorDiffCSBarn[x]) for x in range(len(LabErrorDiffCSBarn))]
-			
-		FilenameCSV = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.csv'
+		# Convert to yield for Target Effect Calculations
+		LabErrorDiffCSYield = LabErrorDiffCSBarn*TargetAtoms*BarnToCmSquared
+		
+		
+		OutputDirectory = '/home/wbrave1/Desktop/20Ne_data/ANL/new_sort/AZUREFits/data/'
 		
 		FilenameDat = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.dat'
 		
-		CSVwriter().write_arrays_to_csv(FilenameCSV, EnergyIndex, LabMidAngle, CSFormatted, LabErrorDiffCSBarn)
 		
 		
+		if Yield:
+		
+			EnergyIndex = [round(BeamEnergy*(Constants().HMass/Constants().NeMass), 3) for i in range(len(LabDiffCSYield))]
+			#EnergyIndex = [6.51 for i in range(len(LabDiffCSYield))]
 			
-		with open(FilenameDat, 'w') as wf:
+			YieldFormatted = ['{:.3e}'.format(LabDiffCSYield[x]) for x in range(len(LabDiffCSYield))]
+			YieldErrorFormatted = ['{:.3e}'.format(LabErrorDiffCSYield[x]) for x in range(len(LabErrorDiffCSYield))]
+			
+			FilenameDat = 'AZUREInputYieldANL' + str(BeamEnergy) + 'MeV.dat'
+			
+			FilenameCSV = 'AZUREInputYieldANL' + str(BeamEnergy) + 'MeV.csv'
+			
+			CSVwriter().write_arrays_to_csv(FilenameCSV, EnergyIndex, LabMidAngle, YieldFormatted, YieldErrorFormatted)
+			
+		else:
+		
+			AZUREEnergy = round(((BeamEnergy - (BeamCurrentCalc().GetEnergyLoss(BeamEnergy)/2)) / BeamCurrentCalc().NeMass) * BeamCurrentCalc().HMass , 3)
+			EnergyIndex = [AZUREEnergy for i in range(len(LabDiffCS))]
+			
+			CSFormatted = ['{:.3e}'.format(LabDiffCSBarn[x]) for x in range(len(LabDiffCSBarn))]
+			CSErrorFormatted = ['{:.3e}'.format(LabErrorDiffCSBarn[x]) for x in range(len(LabErrorDiffCSBarn))]
+			
+			FilenameDat = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.dat'
+			
+			FilenameCSV = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.csv'
+			
+			CSVwriter().write_arrays_to_csv(FilenameCSV, EnergyIndex, LabMidAngle, CSFormatted, LabErrorDiffCSBarn)
+			
+			
+		FilePath = os.path.join(OutputDirectory, FilenameDat)
+		
+				
+		with open(FilePath, 'w') as wf:
 			with open(FilenameCSV, 'r') as rf:
 				[ wf.write('    '.join(row)+'\n') for row in csv.reader(rf)]
 			wf.close()
 			
-		return 0 
+		return 0
+		
+
+class ReactionRate:
+
+
+	# Uses reciprocity theorem to convert 20Ne(p,a) reaction cross section to 17F(a,p) reaction cross section. Will add customizability if I need more file flexibility.	
+	def AlphaPConversion(self):
+	
+		ExtrapFilePath = r'/home/wbrave1/Desktop/20Ne_data/ReactionRate/output/AZUREOut_aa=1_R=2.extrap' 
+		
+		ExtrapFile = open(ExtrapFilePath)
+		
+		ExtrapLines = ExtrapFile.readlines()[:]
+	
+		ExtrapFile.close()
+		
+		ExtrapEnergy = []
+		ExtrapCS = []
+	
+		for line in ExtrapLines:
+			newline = line.split()
+			if newline == []:
+				break
+			else:
+				ExtrapEnergy.append(float(newline[0])) 
+				ExtrapCS.append(float(newline[3])) # convert to cm^2
+		
+		
+		ForwardEnergy = [Constants().QVal + ExtrapEnergy[i] for i in range(len(ExtrapEnergy))]
+		
+		
+		# Masses in Daltons
+		HeFReducedMass = (Constants().FMass*Constants().HeMass)/(Constants().FMass + Constants().HeMass)
+		
+		NeHReducedMass = (Constants().NeMass*Constants().HMass)/(Constants().NeMass + Constants().HMass)
+		
+		ReducedMassRatio = (NeHReducedMass/HeFReducedMass)
+		
+		SpinFactor = ((2*Constants().NeGSspin + 1)*(2*Constants().Hspin + 1))/((2*Constants().FGSspin + 1)*(2*Constants().HeGSspin + 1))
+		
+		ForwardCS = [ SpinFactor * ReducedMassRatio * (ExtrapEnergy[i]/ForwardEnergy[i]) * ExtrapCS[i] for i in range(len(ExtrapCS))]
+		
+		
+		return ForwardEnergy, ForwardCS
+			
+			
+			
+	# Takes Temp in GK, energies in MeV to calculate reaction rate
+	def ReactionRateIntegration(self, Temp):
+	
+		
+		HeFReducedMass = (Constants().FMass*Constants().HeMass)/(Constants().FMass + Constants().HeMass) 
+		
+		EnergyCoM, CrossSection = self.AlphaPConversion()
+		
+		# Integration, LRS
+		
+		#ConstantFactor = np.sqrt(8 / (np.pi * HeFReducedMass)) * (Constants().Mol / (Constants().Boltzmann * Temp)**(3/2))
+		
+		#print(np.sqrt(8 / (np.pi)) * (Constants().Mol / (Constants().Boltzmann * 10**9)**(3/2)))
+		
+		# Illiadis equation 3.10
+		ConstantFactor = ((3.7318*10**10) / Temp**(3/2)) * (1 / np.sqrt(HeFReducedMass)) 
+	
+		RectangularArea = [CrossSection[j] * EnergyCoM[j] * math.exp(-(EnergyCoM[j]/(Constants().Boltzmann * Temp))) * (EnergyCoM[j+1] - EnergyCoM[j]) for j in range(0, len(EnergyCoM)-1)]	
+		
+		ReactionRate = ConstantFactor * sum(RectangularArea)	
+		
+		return ReactionRate
+		
+		
+		
+	# Takes Temp in GK to calculate reaction rate from ReacLib function
+	def ReacLib(self, Temp):
+	
+		a0 = 3.862870*10;
+		a1 = 0.000000;
+		a2 = -4.318000*10;
+		a3 = 4.468270;
+		a4 = -1.639150;
+		a5 = 1.234830*10**(-1);
+		a6 = -6.66667*10**(-1);
+	
+		RateFunc = math.exp(a0 + a1/Temp + a2/Temp**(1/3) + a3*Temp**(1/3) + a4*Temp + a5*Temp**(5/3) + a6*math.log(Temp))
+		
+		return RateFunc
+		
+	
+	# Comparison of our reaction rate and reaclib. Will customize for unspecified number of comparisons if the time comes	
+	def ReactionRatePlot(self):
+	
+		Temperature = [0.1 + 0.01*i for i in range(0, 1001)]
+	
+		ReactionRate = [self.ReactionRateIntegration(Temperature[i]) for i in range(len(Temperature))]
+		
+		ReacLibRate = [self.ReacLib(Temperature[i]) for i in range(len(Temperature))]
+	
+		plt.plot(Temperature, ReactionRate, color='r', marker='.', markersize=1, label='Activation Measurement')
+		
+		plt.plot(Temperature, ReacLibRate, color='b', marker='.', markersize=1, label='ReacLib')
+		
+		plt.yscale('log')
+		
+		
+		plt.xlabel('Temperature (GK)')
+		
+		plt.ylabel('Reaction Rate ($cm^3 mol^{-1} sec^{-1}$)')
+		
+		plt.title('$^{17}F$($\\alpha$,p)$^{20}$Ne Reaction Rate')
+		
+		plt.legend()
+		
+		plt.show()
+		
+		return 0	
+	
+			
+			
+			
+			
+			
+			
+			
 			
