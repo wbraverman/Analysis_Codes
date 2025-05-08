@@ -41,9 +41,12 @@ class Constants:
 		self.FGSspin = 2.5;
 		self.Hspin = 0.5;
 		
+		# Q value for 20Ne(p,a) reaction
 		self.QVal = -4.13; # MeV
 		
 		self.Boltzmann = 8.6173324*10**(-2) # MeV/GK
+		
+		self.BarnToCmSquared = 10**(-24)
 		
 
 class BeamCurrentCalc:
@@ -398,7 +401,7 @@ class BeamCurrentCalc:
 			CMAngles = [158.013, 155.195, 152.349, 149.472, 146.559, 143.605, 140.603, 137.545, 134.423, 131.227, 127.943, 124.555, 121.042, 117.375, 113.517, 109.41, 104.966]
 			CMAngles = np.array(CMAngles)
 			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 152.5:
+		elif BeamEnergy == 152.4:
 			CMAngles = [158.292, 155.512, 152.706, 149.871, 147.002, 144.094, 141.142, 138.137, 135.073, 131.94, 128.726, 125.417, 121.994, 118.432, 114.7, 110.75, 106.512]
 			CMAngles = np.array(CMAngles)
 			CMAngles = CMAngles*(np.pi/180)
@@ -415,48 +418,66 @@ class BeamCurrentCalc:
 	
 	
 	# calculate solid angle of individual rings or group of them in center of mass frame
-	def SolidAngleCalc(self, BeamEnergy, StartRing, StopRing, RingByRing = False):
-	
-	
-		if BeamEnergy == 128:
-			CMAngles = [155.571, 152.408, 149.202, 145.944, 142.628, 139.241, 135.771, 132.202, 128.515, 124.682, 120.669, 116.426, 111.878, 106.903, 101.279, 94.496, 84.534]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 130:
-			CMAngles = [155.884, 152.765, 149.606, 146.399, 143.136, 139.807, 136.4, 132.902, 129.294, 125.552, 121.647, 117.535, 113.152, 108.402, 103.114, 96.934, 88.833]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 132:
-			CMAngles = [156.179, 153.102, 149.987, 146.827, 143.614, 140.34, 136.992, 133.559, 130.024, 126.365, 122.557, 118.561, 114.324, 109.766, 104.75, 99.021, 91.945]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 134:
-			CMAngles = [156.453, 153.415, 150.341, 147.224, 144.057, 140.832, 137.538, 134.164, 130.695, 127.111, 123.39, 119.496, 115.386, 110.99, 106.198, 100.814, 94.407]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 137:
-			CMAngles = [156.828, 153.844, 150.825, 147.767, 144.662, 141.504, 138.282, 134.987, 131.606, 128.121, 124.513, 120.752, 116.803, 112.609, 108.087, 103.098, 97.366]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 141:
-			CMAngles = [157.28, 154.359, 151.407, 148.418, 145.388, 142.308, 139.172, 135.97, 132.69, 129.32, 125.84, 122.23, 118.458, 114.483, 110.243, 105.64, 100.506]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 143:
-			CMAngles = [157.48, 154.588, 151.665, 148.707, 145.709, 142.664, 139.565, 136.403, 133.167, 129.845, 126.421, 122.874, 119.176, 115.29, 110.301, 106.709, 101.791]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 149:
-			CMAngles = [158.013, 155.195, 152.349, 149.472, 146.559, 143.605, 140.603, 137.545, 134.423, 131.227, 127.943, 124.555, 121.042, 117.375, 113.517, 109.41, 104.966]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 152.5:
-			CMAngles = [158.292, 155.512, 152.706, 149.871, 147.002, 144.094, 141.142, 138.137, 135.073, 131.94, 128.726, 125.417, 121.994, 118.432, 114.7, 110.75, 106.512]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
+	def SolidAngleCalc(self, BeamEnergy, StartRing, StopRing, ExState = False, RingByRing = False):
+		
+		if ExState:
+		
+			if BeamEnergy == 141:
+				CMAngles = [155.232, 152.02, 148.762, 145.45, 142.075, 138.625, 135.085, 131.438, 127.662, 123.727, 119.593, 115.199, 110.457, 105.211, 99.157, 91.487]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 143:
+				CMAngles = [155.542, 152.375, 149.164, 145.903, 142.581, 139.189, 135.714, 132.139, 128.445, 124.605, 120.583, 116.328, 111.766, 106.773, 101.121, 94.283, 84.106]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 149:
+				CMAngles = [156.348, 153.296, 150.207, 147.073, 143.889, 140.645, 137.332, 133.936, 130.442, 126.831, 123.078, 119.147, 114.991, 110.537, 105.667, 100.164, 93.535]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			else:
+				print('No data for this energy.')
+				return 0
+		
 		else:
-			print('No data for this energy')
-			return 0
+			if BeamEnergy == 128:
+				CMAngles = [155.571, 152.408, 149.202, 145.944, 142.628, 139.241, 135.771, 132.202, 128.515, 124.682, 120.669, 116.426, 111.878, 106.903, 101.279, 94.496, 84.534]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 130:
+				CMAngles = [155.884, 152.765, 149.606, 146.399, 143.136, 139.807, 136.4, 132.902, 129.294, 125.552, 121.647, 117.535, 113.152, 108.402, 103.114, 96.934, 88.833]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 132:
+				CMAngles = [156.179, 153.102, 149.987, 146.827, 143.614, 140.34, 136.992, 133.559, 130.024, 126.365, 122.557, 118.561, 114.324, 109.766, 104.75, 99.021, 91.945]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 134:
+				CMAngles = [156.453, 153.415, 150.341, 147.224, 144.057, 140.832, 137.538, 134.164, 130.695, 127.111, 123.39, 119.496, 115.386, 110.99, 106.198, 100.814, 94.407]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 137:
+				CMAngles = [156.828, 153.844, 150.825, 147.767, 144.662, 141.504, 138.282, 134.987, 131.606, 128.121, 124.513, 120.752, 116.803, 112.609, 108.087, 103.098, 97.366]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 141:
+				CMAngles = [157.28, 154.359, 151.407, 148.418, 145.388, 142.308, 139.172, 135.97, 132.69, 129.32, 125.84, 122.23, 118.458, 114.483, 110.243, 105.64, 100.506]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 143:
+				CMAngles = [157.48, 154.588, 151.665, 148.707, 145.709, 142.664, 139.565, 136.403, 133.167, 129.845, 126.421, 122.874, 119.176, 115.29, 110.301, 106.709, 101.791]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 149:
+				CMAngles = [158.013, 155.195, 152.349, 149.472, 146.559, 143.605, 140.603, 137.545, 134.423, 131.227, 127.943, 124.555, 121.042, 117.375, 113.517, 109.41, 104.966]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			elif BeamEnergy == 152.5:
+				CMAngles = [158.292, 155.512, 152.706, 149.871, 147.002, 144.094, 141.142, 138.137, 135.073, 131.94, 128.726, 125.417, 121.994, 118.432, 114.7, 110.75, 106.512]
+				CMAngles = np.array(CMAngles)
+				CMAngles = CMAngles*(np.pi/180)
+			else:
+				print('No data for this energy')
+				return 0
 		
 		
 		
@@ -500,37 +521,8 @@ class BeamCurrentCalc:
 			MidAngle = round((LabAnglesDeg[StopRing+1] + LabAnglesDeg[StartRing]) / 2, 3)
 			
 			return SolidAngle, MidAngle
-	
-	
-	
-	# calculate solid angle for excited state reactions
-	def ExSolidAngleCalc(self, BeamEnergy, StartRing, StopRing):
-	
-		
-		if BeamEnergy == 141:
-			CMAngles = [155.232, 152.02, 148.762, 145.45, 142.075, 138.625, 135.085, 131.438, 127.662, 123.727, 119.593, 115.199, 110.457, 105.211, 99.157, 91.487]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 143:
-			CMAngles = [155.542, 152.375, 149.164, 145.903, 142.581, 139.189, 135.714, 132.139, 128.445, 124.605, 120.583, 116.328, 111.766, 106.773, 101.121, 94.283, 84.106]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		elif BeamEnergy == 149:
-			CMAngles = [156.348, 153.296, 150.207, 147.073, 143.889, 140.645, 137.332, 133.936, 130.442, 126.831, 123.078, 119.147, 114.991, 110.537, 105.667, 100.164, 93.535]
-			CMAngles = np.array(CMAngles)
-			CMAngles = CMAngles*(np.pi/180)
-		else:
-			print('No data for this energy.')
-			return 0
-			
-		
-		SolidAngle = round(2*np.pi*(np.cos(CMAngles[StopRing+1]) - np.cos(CMAngles[StartRing])), 3)
-		
-		return SolidAngle
-		
-		
-		
-		
+
+				
 		
 	# method to get beam current of runs where proton scattering cross section is low. This method will normalize the current from other runs with appreciable proton scattering cross sections
 	# where we can calculate a beam current from Fernandez data. Takes an unspecified number of other runs to scale to.	
@@ -664,8 +656,8 @@ class CSCalc:
 			ring_num = [float(i.split(',', 1)[0]) for i in lines[StartRing:StopRing+1]];
 			alpha_counts = [round(float(i.split(',', 2)[1]), 0) for i in lines[StartRing:StopRing+1]];
 			error = [round(float(i.split(',', 3)[2]), 0) for i in lines[StartRing:StopRing+1]];
-			
-		#print('Total number of alphas: ', sum(alpha_counts))
+		
+		
 			
 		return alpha_counts, error
 		
@@ -811,7 +803,7 @@ class CSCalc:
 		
 	# Method to calculate differntial cross section from predetermined beam current values. We need to approach how we calculate beam currents from Fernandez data with more scutiny, This 
 	# method is a stand in until that time.
-	def GetDiffCSFromBC(self, BeamEnergy, StartRing, StopRing):
+	def GetDiffCSFromBC(self, BeamEnergy, StartRing, StopRing, ExState = False):
 	
 		if BeamEnergy == 128:
 			current = 13
@@ -822,6 +814,9 @@ class CSCalc:
 		elif BeamEnergy == 132:
 			current = 14 # epa
 			current_error = 3.5
+		elif BeamEnergy == 134:
+			current = 11
+			current_error = 5
 		elif BeamEnergy == 137:
 			current = 18.5
 			current_error = 5.5
@@ -841,19 +836,31 @@ class CSCalc:
 		
 		target_thickness = BeamCurrentCalc().GetTargetThickness(BeamEnergy)
 		
-		runtime = BeamCurrentCalc().GetRuntime(BeamEnergy)	
-			
-		Alphas, AlphaError = self.GetAlphaCounts(BeamEnergy, StartRing, StopRing)
-		
-		RingEff = BeamCurrentCalc().SingleRingEff(BeamEnergy, StartRing, StopRing, ExcitedState = False, PrintEff = False, RingByRing = True)
+		runtime = BeamCurrentCalc().GetRuntime(BeamEnergy)			
 		
 		HydrogenAtoms = round((target_thickness/Constants().MethyleneMolarMass)*Constants().Mol*2, 3)
 		
 		BeamParticles = (current / (Constants().NeChargeState*Constants().ElectronCharge*10**12)) * runtime
 		
 		BeamParticlesError = (current_error / (Constants().NeChargeState*Constants().ElectronCharge*10**12)) * runtime
+		
+		if ExState:
+		
+			Alphas, AlphaError = self.GetExAlphaCounts(BeamEnergy, StartRing, StopRing)
+			
+			RingEff = BeamCurrentCalc().SingleRingEff(BeamEnergy, StartRing, StopRing, ExcitedState = True, PrintEff = False, RingByRing = True)
+			
+		else:
+			
+			Alphas, AlphaError = self.GetAlphaCounts(BeamEnergy, StartRing, StopRing)
+			
+			RingEff = BeamCurrentCalc().SingleRingEff(BeamEnergy, StartRing, StopRing, ExcitedState = False, PrintEff = False, RingByRing = True)
+			
 			
 		###################################################################################
+		
+		
+				
 		
 		# Calculate alpha cross section	
 				
@@ -869,6 +876,9 @@ class CSCalc:
 		
 		ErrorDiffCS = [np.sqrt(SquaredErrorFromAlphas[i] + SquaredCurrentError[i]) for i in range(len(SquaredCurrentError))]
 		
+		# Different formulation of error to verify
+		#ErrorDiffCS = [DiffCS[i] * np.sqrt((AlphaError[i]/Alphas[i])**2 + (BeamParticlesError/BeamParticles)**2) for i in range(len(DiffCS))]
+		
 		###################################################################################
 		
 		
@@ -877,75 +887,143 @@ class CSCalc:
 		return DiffCS, ErrorDiffCS
 		
 	
-	# Calculates 20Ne(p,a) differential cross section in lab frame. Jacobians retrieved from RELKIN.
-	def GetLabDiffCS(self, BeamEnergy, StartRing, StopRing):
+	# Calculates 20Ne(p,a) differential cross section in lab frame. Jacobians and lab angles retrieved from RELKIN.
+	def GetLabDiffCS(self, BeamEnergy, StartRing, StopRing, ExState = False):
 	
+		if ExState:
 		
-		if BeamEnergy == 128:
+			if BeamEnergy == 149:
+			
+				MidPointLabAngle = [149.42, 145.77, 142.11, 138.42, 134.71, 130.95, 127.14, 123.29]
+				
+				Jacobian = [1.4238, 1.4045, 1.3835, 1.3609, 1.3370, 1.3117, 1.2851, 1.2575]
+				
+			elif BeamEnergy == 143:
+			
+				MidPointLabAngle = [148.11, 144.31, 140.48, 136.63]
+				
+				Jacobian = [1.4403, 1.4182, 1.3942, 1.3686]
+				
+			elif BeamEnergy == 141:
+			
+				MidPointLabAngle = [147.61, 143.74, 139.86, 135.93, 131.98, 127.98, 123.91, 119.76, 115.51, 111.14]
+				
+				Jacobian = [1.4465, 1.4232, 1.3981, 1.3712, 1.3427, 1.3128, 1.2815, 1.2490, 1.2153, 1.1806]
 		
-			MidPointLabAngle = [148.17, 144.37, 140.55, 136.71, 132.82, 128.90, 124.92, 120.86]
-			
-			Jacobian = [1.4390, 1.4170, 1.3933, 1.3679, 1.3408, 1.3124, 1.2827, 1.2518]
-			
-		elif BeamEnergy == 130:
-		
-			MidPointLabAngle = [148.67, 144.95, 141.19, 137.41, 133.59, 129.73, 125.82, 121.85]
-			
-			Jacobian = [1.4325, 1.4118, 1.3891, 1.3649, 1.3391, 1.3120, 1.2837, 1.2542]					
-		
-		elif BeamEnergy == 132:
-			
-			MidPointLabAngle = [149.15, 145.47, 141.79, 138.06, 134.31, 130.52, 126.68, 122.77, 118.78, 114.71]
-			
-			Jacobian = [1.4265, 1.4067, 1.3852, 1.3620, 1.3375, 1.3116, 1.2845, 1.2561, 1.2268, 1.1964]
-			
-		elif BeamEnergy == 134:
-		
-			MidPointLabAngle = [149.59, 145.98, 142.33, 138.67, 134.97, 131.23, 127.46, 123.62, 119.71, 115.72]
-			
-			Jacobian = [1.4209, 1.4020, 1.3814, 1.3814, 1.3593, 1.3357, 1.3109, 1.2849, 1.2577, 1.2295, 1.2004]
-			
-		elif BeamEnergy == 137:
-		
-			MidPointLabAngle = [150.20, 146.64, 143.08, 139.48, 135.87, 132.22, 128.52, 124.79, 120.97, 117.08]
-			
-			Jacobian = [1.4131, 1.3953, 1.3760, 1.3551, 1.3330, 1.3096, 1.2851, 1.2595, 1.2328, 1.2053]
-			
-		elif BeamEnergy == 141:
-		
-			MidPointLabAngle = [150.91, 147.44, 143.97, 140.47, 136.95, 133.39, 129.80, 126.16, 122.46, 118.70, 114.85, 110.87, 106.77, 102.46, 97.90, 92.94]
-			
-			Jacobian = [1.4036, 1.3872, 1.3693, 1.3500, 1.3295, 1.3077, 1.2849, 1.2610, 1.2361, 1.2104, 1.1838, 1.1562, 1.1277, 1.0982, 1.0674, 1.0348]
-			
-		elif BeamEnergy == 143:
-		
-			MidPointLabAngle = [151.22, 147.81, 144.37, 140.91, 137.43, 133.90, 130.36, 126.76, 123.13, 119.41]
-			
-			Jacobian = [1.3993, 1.3835, 1.3662, 1.3476, 1.3277, 1.3066, 1.2845, 1.2614, 1.2374, 1.2123]
-			
-		elif BeamEnergy == 149:
-		
-			MidPointLabAngle = [152.06, 148.74, 145.41, 142.06, 138.67, 135.27, 131.84, 128.37, 124.85, 121.28, 117.64, 113.92, 110.08, 106.11]
-			
-			Jacobian = [1.3875, 1.3732, 1.3575, 1.3405, 1.3224, 1.3032, 1.2830, 1.2618, 1.2397, 1.2168, 1.1931, 1.1686, 1.1432, 1.1171]
-			
 		else:
 		
-			print('No data for this energy.')
-			
-			return 0
-			
-			
-		CoMDiffCS, CoMErrorDiffCS = self.GetDiffCSFromBC(BeamEnergy, StartRing, StopRing)
+			if BeamEnergy == 128:
 		
-		LabDiffCS = [round(CoMDiffCS[i]*Jacobian[i], 3) for i in range(len(CoMDiffCS))]
+				MidPointLabAngle = [148.17, 144.37, 140.55, 136.71, 132.82, 128.90, 124.92, 120.86]
+			
+				Jacobian = [1.4390, 1.4170, 1.3933, 1.3679, 1.3408, 1.3124, 1.2827, 1.2518]
+			
+			elif BeamEnergy == 130:
 		
-		LabDiffErrorCS = [round(CoMErrorDiffCS[i]*Jacobian[i], 3) for i in range(len(CoMErrorDiffCS))]
+				MidPointLabAngle = [148.67, 144.95, 141.19, 137.41, 133.59, 129.73, 125.82, 121.85]
+			
+				Jacobian = [1.4325, 1.4118, 1.3891, 1.3649, 1.3391, 1.3120, 1.2837, 1.2542]					
+		
+			elif BeamEnergy == 132:
+			
+				MidPointLabAngle = [149.15, 145.47, 141.79, 138.06, 134.31, 130.52, 126.68, 122.77, 118.78, 114.71]
+			
+				Jacobian = [1.4265, 1.4067, 1.3852, 1.3620, 1.3375, 1.3116, 1.2845, 1.2561, 1.2268, 1.1964]
+			
+			elif BeamEnergy == 134:
+		
+				MidPointLabAngle = [149.59, 145.98, 142.33, 138.67, 134.97, 131.23, 127.46, 123.62, 119.71, 115.72]
+			
+				Jacobian = [1.4209, 1.4020, 1.3814, 1.3593, 1.3357, 1.3109, 1.2849, 1.2577, 1.2295, 1.2004]
+			
+			elif BeamEnergy == 137:
+		
+				MidPointLabAngle = [150.20, 146.64, 143.08, 139.48, 135.87, 132.22, 128.52, 124.79, 120.97, 117.08]
+			
+				Jacobian = [1.4131, 1.3953, 1.3760, 1.3551, 1.3330, 1.3096, 1.2851, 1.2595, 1.2328, 1.2053]
+			
+			elif BeamEnergy == 141:
+		
+				MidPointLabAngle = [150.91, 147.44, 143.97, 140.47, 136.95, 133.39, 129.80, 126.16, 122.46, 118.70, 114.85, 110.87, 106.77, 102.46, 97.90, 92.94]
+			
+				Jacobian = [1.4036, 1.3872, 1.3693, 1.3500, 1.3295, 1.3077, 1.2849, 1.2610, 1.2361, 1.2104, 1.1838, 1.1562, 1.1277, 1.0982, 1.0674, 1.0348]
+			
+			elif BeamEnergy == 143:
+		
+				MidPointLabAngle = [151.22, 147.81, 144.37, 140.91, 137.43, 133.90, 130.36, 126.76, 123.13, 119.41]
+			
+				Jacobian = [1.3993, 1.3835, 1.3662, 1.3476, 1.3277, 1.3066, 1.2845, 1.2614, 1.2374, 1.2123]
+			
+			elif BeamEnergy == 149:
+		
+				MidPointLabAngle = [152.06, 148.74, 145.41, 142.06, 138.67, 135.27, 131.84, 128.37, 124.85, 121.28, 117.64, 113.92, 110.08, 106.11]
+			
+				Jacobian = [1.3875, 1.3732, 1.3575, 1.3405, 1.3224, 1.3032, 1.2830, 1.2618, 1.2397, 1.2168, 1.1931, 1.1686, 1.1432, 1.1171]
+			
+			else:
+		
+				print('No data for this energy.')
+			
+				return 0
+			
+			
+		CoMDiffCS, CoMErrorDiffCS = self.GetDiffCSFromBC(BeamEnergy, StartRing, StopRing, ExState=ExState)
+		
+		LabDiffCS = [round(CoMDiffCS[i]*Jacobian[i], 3) for i in range(len(Jacobian))]
+		
+		LabDiffErrorCS = [round(CoMErrorDiffCS[i]*Jacobian[i], 3) for i in range(len(Jacobian))]
 		
 		return np.array(LabDiffCS), np.array(LabDiffErrorCS), MidPointLabAngle
+		
+		
+	# Midpoint Riemann sum integration
+	def ExtrapIntegration(self, FilePath):
+	
+		Angle, DiffCS, SFactor = CSPlot().ExtrapReader(FilePath)
+		
+		# conver to mB
+		DiffCS = np.array(DiffCS)
+		DiffCS = 1000*DiffCS
+		
+		# convert to radian
+		Angle = np.array(Angle)
+		Angle = (np.pi/180)*Angle
+		
+		MidPointDiffCS = [(DiffCS[i]+DiffCS[i+1])/2 for i in range(0, len(DiffCS)-1)]
+		MidAngle = [(Angle[i]+Angle[i+1])/2 for i in range(0, len(Angle)-1)]
+		
+		Areas = [MidPointDiffCS[i]*np.sin(MidAngle[i])*(abs(Angle[i]-Angle[i+1])) for i in range(len(MidPointDiffCS))]
+		
+		RSum = 2*np.pi*sum(Areas)
+	
+		return round(RSum, 2)
 
 		
 class CSPlot:
+	
+	# Read AZURE extrapolation file. Right now it's just set for differential cross section files
+	def ExtrapReader(self, FilePath):
+	
+		ExtrapFile = open(FilePath)
+	
+		ExtrapLines = ExtrapFile.readlines()[:]
+	
+		ExtrapFile.close()
+	
+		ExtrapCS = []
+		ExtrapAngle = []
+		SFactor = []
+	
+		for line in ExtrapLines:
+			newline = line.split()
+			if newline == []:
+				break
+			else:
+				ExtrapCS.append(float(newline[3]))
+				ExtrapAngle.append(float(newline[2]))
+				SFactor.append(float(newline[3]))
+				
+		return ExtrapAngle, ExtrapCS, SFactor
 		
 	
 	# Plots 20Ne(p,a) differential cross section in CoM Frame	
@@ -974,7 +1052,86 @@ class CSPlot:
 		plt.show()
 		
 		return 0
+	
+	# Plot AZURE fits to differntial cross section data	
+	def AZUREFitDiffCSPlot(self, FilePath, BeamEnergy, Yield=False, ExState = False):
+	
+		plt.rcParams.update({'font.size':20})
 		
+		AZUREFile = open(FilePath)
+		
+		lines = AZUREFile.readlines()[:]
+
+		AZUREFile.close()
+				
+		Angle = []
+		PAlphaData = []
+		PAlphaError = []
+		FitData = []
+		FitError = []
+		
+		for line in lines:
+			newline = line.split()
+			if newline == []:
+				break
+			else:
+				Angle.append(float(newline[2]))
+				if Yield:
+					PAlphaData.append(float(newline[5])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().BarnToCmSquared))
+					PAlphaError.append(float(newline[6])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().BarnToCmSquared))
+					FitData.append(float(newline[3])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().BarnToCmSquared))
+				else:
+					PAlphaData.append(float(newline[5]))
+					PAlphaError.append(float(newline[6]))
+					FitData.append(float(newline[3]))
+		 
+		if ExState:		
+			TitleString = '$^{20}$Ne(p,$\\alpha_1$)$^{17}$F Cross Section at ' + str(BeamEnergy) + ' MeV'		
+		else: 
+			TitleString = '$^{20}$Ne(p,$\\alpha_0$)$^{17}$F Cross Section at ' + str(BeamEnergy) + ' MeV'	
+		
+		plt.xlabel('Center of Mass Angle ($^\circ$)')
+		plt.ylabel('$\\frac{d\sigma}{d\Omega} \left(\\frac{B}{str}\\right)$')
+		
+		plt.title(TitleString)
+
+		plt.gca().invert_xaxis()
+		
+		plt.errorbar(Angle, PAlphaData, yerr = PAlphaError, xerr = None, linestyle = 'None', color = 'b', marker='o', label='Data' )
+		plt.plot(Angle, FitData, color='r', marker='.', markersize=1, label='AZURE Fit')
+		
+		plt.legend()
+
+		plt.show()
+		
+		return 0 
+		
+	# Plot AZURE extrapolations of differential cross sections	
+	def AZUREDiffCSExtrap(self, FilePath, BeamEnergy, ExState=False):
+	
+		plt.rcParams.update({'font.size':20})
+		
+		ExtrapAngle, ExtrapCS = self.ExtrapReader(FilePath)
+				
+		plt.xlabel('Center of Mass Angle ($^\circ$)')
+		plt.ylabel('$\\frac{d\sigma}{d\Omega} \left(\\frac{B}{str}\\right)$')
+		
+		if ExState:		
+			TitleString = '$^{20}$Ne(p,$\\alpha_1$)$^{17}$F Cross Section at ' + str(BeamEnergy) + ' MeV'		
+		else: 
+			TitleString = '$^{20}$Ne(p,$\\alpha_0$)$^{17}$F Cross Section at ' + str(BeamEnergy) + ' MeV'
+			
+		plt.title(TitleString)
+		
+		plt.gca().invert_xaxis()
+		
+		plt.plot(ExtrapAngle, ExtrapCS, color='k', marker='.', linestyle='None', label='AZURE Extrapolation')
+		
+		plt.legend()
+		
+		plt.show()
+		
+		return 0
 		
 class CSVwriter:
 
@@ -1029,8 +1186,8 @@ class CSVwriter:
 
 class AZUREWriter:
 
-	# Writes input file for AZURE, specifically for differential cross section calculations 
-	def InputFile(self, BeamEnergy, StartRing, StopRing, Yield=False):
+	# Get the number of target atoms for the "pretend" Neon target
+	def GetTargetAtoms(self, BeamEnergy):
 	
 		if BeamEnergy == 128:
 			TargetAtoms = 5.10*10**19
@@ -1038,6 +1195,8 @@ class AZUREWriter:
 			TargetAtoms = 5.39*10**19
 		elif BeamEnergy == 132:
 			TargetAtoms = 5.41*10**19
+		elif BeamEnergy == 134:
+			TargetAtoms = 5.42*10**19
 		elif BeamEnergy == 137:
 			TargetAtoms = 5.42*10**19
 		elif BeamEnergy == 141:
@@ -1049,11 +1208,16 @@ class AZUREWriter:
 		else:
 			print('No data for this energy.')
 			return 0
+			
+		return TargetAtoms
+
+	# Writes input file for AZURE, specifically for differential cross section calculations 
+	def InputFile(self, BeamEnergy, StartRing, StopRing, ExState = False, Yield=False):
 	
+	
+		LabDiffCS, LabErrorDiffCS, LabMidAngle = CSCalc().GetLabDiffCS(BeamEnergy, StartRing, StopRing, ExState = ExState)
+			
 		
-		BarnToCmSquared = 10**(-24)
-		
-		LabDiffCS, LabErrorDiffCS, LabMidAngle = CSCalc().GetLabDiffCS(BeamEnergy, StartRing, StopRing)
 		
 		# Convert from mB to B
 		LabDiffCSBarn = LabDiffCS/1000 
@@ -1062,15 +1226,19 @@ class AZUREWriter:
 		LabErrorDiffCSBarn = LabErrorDiffCS/1000 
 		
 		# Convert to yield for Target Effect Calculations
-		LabDiffCSYield = LabDiffCSBarn*TargetAtoms*BarnToCmSquared
+		LabDiffCSYield = LabDiffCSBarn*self.GetTargetAtoms(BeamEnergy)*Constants().BarnToCmSquared
 		
 		# Convert to yield for Target Effect Calculations
-		LabErrorDiffCSYield = LabErrorDiffCSBarn*TargetAtoms*BarnToCmSquared
+		LabErrorDiffCSYield = LabErrorDiffCSBarn*self.GetTargetAtoms(BeamEnergy)*Constants().BarnToCmSquared
 		
 		
 		OutputDirectory = '/home/wbrave1/Desktop/20Ne_data/ANL/new_sort/AZUREFits/data/'
 		
-		FilenameDat = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.dat'
+		
+		if ExState:
+			FilenameDat = 'AZUREInputANL' + str(BeamEnergy) + 'MeVExState.dat'
+		else:
+			FilenameDat = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.dat'
 		
 		
 		
@@ -1082,7 +1250,12 @@ class AZUREWriter:
 			YieldFormatted = ['{:.3e}'.format(LabDiffCSYield[x]) for x in range(len(LabDiffCSYield))]
 			YieldErrorFormatted = ['{:.3e}'.format(LabErrorDiffCSYield[x]) for x in range(len(LabErrorDiffCSYield))]
 			
-			FilenameDat = 'AZUREInputYieldANL' + str(BeamEnergy) + 'MeV.dat'
+			if ExState:
+				FilenameDat = 'AZUREInputYieldANL' + str(BeamEnergy) + 'MeVExState.dat'
+				FilenameCSV = 'AZUREInputYieldANL' + str(BeamEnergy) + 'MeVExState.csv'
+			else:
+				FilenameDat = 'AZUREInputYieldANL' + str(BeamEnergy) + 'MeV.dat'
+				FilenameCSV = 'AZUREInputYieldANL' + str(BeamEnergy) + 'MeV.csv'
 			
 			FilenameCSV = 'AZUREInputYieldANL' + str(BeamEnergy) + 'MeV.csv'
 			
@@ -1090,15 +1263,18 @@ class AZUREWriter:
 			
 		else:
 		
-			AZUREEnergy = round(((BeamEnergy - (BeamCurrentCalc().GetEnergyLoss(BeamEnergy)/2)) / BeamCurrentCalc().NeMass) * BeamCurrentCalc().HMass , 3)
+			AZUREEnergy = round(((BeamEnergy - (Constants().GetEnergyLoss(BeamEnergy)/2)) / Constants().NeMass) * Constants().HMass , 3)
 			EnergyIndex = [AZUREEnergy for i in range(len(LabDiffCS))]
 			
 			CSFormatted = ['{:.3e}'.format(LabDiffCSBarn[x]) for x in range(len(LabDiffCSBarn))]
 			CSErrorFormatted = ['{:.3e}'.format(LabErrorDiffCSBarn[x]) for x in range(len(LabErrorDiffCSBarn))]
 			
-			FilenameDat = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.dat'
-			
-			FilenameCSV = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.csv'
+			if ExState:
+				FilenameDat = 'AZUREInputANL' + str(BeamEnergy) + 'MeVExState.dat'
+				FilenameCSV = 'AZUREInputANL' + str(BeamEnergy) + 'MeVExState.csv'
+			else:
+				FilenameDat = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.dat'
+				FilenameCSV = 'AZUREInputANL' + str(BeamEnergy) + 'MeV.csv'
 			
 			CSVwriter().write_arrays_to_csv(FilenameCSV, EnergyIndex, LabMidAngle, CSFormatted, LabErrorDiffCSBarn)
 			
@@ -1118,7 +1294,7 @@ class ReactionRate:
 
 
 	# Uses reciprocity theorem to convert 20Ne(p,a) reaction cross section to 17F(a,p) reaction cross section. Will add customizability if I need more file flexibility.	
-	def AlphaPConversion(self):
+	def GetReactionData(self, TimeInverted = True):
 	
 		ExtrapFilePath = r'/home/wbrave1/Desktop/20Ne_data/ReactionRate/output/AZUREOut_aa=1_R=2.extrap' 
 		
@@ -1139,41 +1315,56 @@ class ReactionRate:
 				ExtrapEnergy.append(float(newline[0])) 
 				ExtrapCS.append(float(newline[3])) # convert to cm^2
 		
+		if TimeInverted:
 		
-		ForwardEnergy = [Constants().QVal + ExtrapEnergy[i] for i in range(len(ExtrapEnergy))]
+			return ExtrapEnergy, ExtrapCS
+			
+		else:
 		
 		
-		# Masses in Daltons
-		HeFReducedMass = (Constants().FMass*Constants().HeMass)/(Constants().FMass + Constants().HeMass)
+			ForwardEnergy = [Constants().QVal + ExtrapEnergy[i] for i in range(len(ExtrapEnergy))]
+		
+		
+			# Masses in Daltons
+			HeFReducedMass = (Constants().FMass*Constants().HeMass)/(Constants().FMass + Constants().HeMass)
+		
+			NeHReducedMass = (Constants().NeMass*Constants().HMass)/(Constants().NeMass + Constants().HMass)
+		
+			ReducedMassRatio = (NeHReducedMass/HeFReducedMass)
+		
+			SpinFactor = ((2*Constants().NeGSspin + 1)*(2*Constants().Hspin + 1))/((2*Constants().FGSspin + 1)*(2*Constants().HeGSspin + 1))
+		
+			ForwardCS = [ SpinFactor * ReducedMassRatio * (ExtrapEnergy[i]/ForwardEnergy[i]) * ExtrapCS[i] for i in range(len(ExtrapCS))]
+		
+		
+			return ForwardEnergy, ForwardCS
+			
+	# Convert 20Ne(p,a) reaction rate to 17F(a,p). Takes temp in GK	
+	def ReactionRateConersion(self, Temp):
+		
+		SpinFactor = ((2*Constants().NeGSspin + 1)*(2*Constants().Hspin + 1)) / ((2*Constants().HeGSspin + 1)*(2*Constants().FGSspin + 1))
 		
 		NeHReducedMass = (Constants().NeMass*Constants().HMass)/(Constants().NeMass + Constants().HMass)
 		
-		ReducedMassRatio = (NeHReducedMass/HeFReducedMass)
+		HeFReducedMass = (Constants().FMass*Constants().HeMass)/(Constants().FMass + Constants().HeMass)
 		
-		SpinFactor = ((2*Constants().NeGSspin + 1)*(2*Constants().Hspin + 1))/((2*Constants().FGSspin + 1)*(2*Constants().HeGSspin + 1))
+		ReducedMassRatio = NeHReducedMass/HeFReducedMass
 		
-		ForwardCS = [ SpinFactor * ReducedMassRatio * (ExtrapEnergy[i]/ForwardEnergy[i]) * ExtrapCS[i] for i in range(len(ExtrapCS))]
+		ConversionFactor = SpinFactor * ReducedMassRatio * math.exp(-Constants().QVal / (Constants().Boltzmann * Temp))
 		
-		
-		return ForwardEnergy, ForwardCS
+		return ConversionFactor
 			
 			
 			
 	# Takes Temp in GK, energies in MeV to calculate reaction rate
-	def ReactionRateIntegration(self, Temp):
+	def ReactionRateIntegration(self, Temp, TimeInverted):
 	
 		
 		HeFReducedMass = (Constants().FMass*Constants().HeMass)/(Constants().FMass + Constants().HeMass) 
 		
-		EnergyCoM, CrossSection = self.AlphaPConversion()
+		EnergyCoM, CrossSection = self.GetReactionData(TimeInverted = TimeInverted)
 		
-		# Integration, LRS
-		
-		#ConstantFactor = np.sqrt(8 / (np.pi * HeFReducedMass)) * (Constants().Mol / (Constants().Boltzmann * Temp)**(3/2))
-		
-		#print(np.sqrt(8 / (np.pi)) * (Constants().Mol / (Constants().Boltzmann * 10**9)**(3/2)))
-		
-		# Illiadis equation 3.10
+		# Illiadis equation 3.10, takes temperature in GK
 		ConstantFactor = ((3.7318*10**10) / Temp**(3/2)) * (1 / np.sqrt(HeFReducedMass)) 
 	
 		RectangularArea = [CrossSection[j] * EnergyCoM[j] * math.exp(-(EnergyCoM[j]/(Constants().Boltzmann * Temp))) * (EnergyCoM[j+1] - EnergyCoM[j]) for j in range(0, len(EnergyCoM)-1)]	
@@ -1185,7 +1376,7 @@ class ReactionRate:
 		
 		
 	# Takes Temp in GK to calculate reaction rate from ReacLib function
-	def ReacLib(self, Temp):
+	def ReacLibForwardReac(self, Temp):
 	
 		a0 = 3.862870*10;
 		a1 = 0.000000;
@@ -1199,28 +1390,138 @@ class ReactionRate:
 		
 		return RateFunc
 		
+	def ReacLibInverseReac(self, Temp):
 	
-	# Comparison of our reaction rate and reaclib. Will customize for unspecified number of comparisons if the time comes	
-	def ReactionRatePlot(self):
-	
-		Temperature = [0.1 + 0.01*i for i in range(0, 1001)]
-	
-		ReactionRate = [self.ReactionRateIntegration(Temperature[i]) for i in range(len(Temperature))]
+		a0 = 4.156300 * 10;
+		a1 = -4.792660 * 10;
+		a2 = -4.318000 * 10;
+		a3 = 4.468270;
+		a4 = -1.639150;
+		a5 = 1.234830 * 10**(-1);
+		a6 = -6.66667 * 10**(-1);
 		
-		ReacLibRate = [self.ReacLib(Temperature[i]) for i in range(len(Temperature))]
+		RateFunc = math.exp(a0 + a1/Temp + a2/Temp**(1/3) + a3*Temp**(1/3) + a4*Temp + a5*Temp**(5/3) + a6*math.log(Temp))
+		
+		return RateFunc
+		
 	
+	def NacreRate(self, Temp):
+	
+		# Tabular values from NACRE paper
+		'''
+		Temp = [0.9, 1, 1.25, 1.5, 1.75, 2, 2.5, 3] 
+		AdoptedRate = [1.22, 1.14, 3.22, 1.72, 9.03, 1.08, 1.01, 1.08]
+		Exp = [-24, -21, -16, -12, -10, -7, -4, -2]
+		
+		Rate = [AdoptedRate[i]*10**Exp[i] for i in range(len(AdoptedRate))]
+		
+		return Temp, Rate
+		'''
+		
+		# Nacre also provides a functional form of reaction rate
+		a0 = 3.75*10**(18)
+		a1 = -43.18
+		a2 = -47.92
+		a3 = -1.40*10**(-3)
+		a4 = 3.44*10**(-2)
+		a5 = -0.278
+		a6 = 0.354
+		
+		Rate = a0*Temp**(-2/3) *  math.exp(a1*Temp**(-1/3) + a2/Temp) * math.exp(a3*Temp**4 + a4*Temp**3 + a5*Temp**2 + a6*Temp)
+		
+		return Rate
+	
+	# only applies for T9=0.9 to T9=10	
+	def ThermalizedNacreRate(self, Temp):
+	
+		GSrate = self.NacreRate(Temp)
+		
+		a0 = 5.341
+		a1 = -0.549
+		a2 = 0.363
+		a3 = -0.0603
+		a4 = 2.9*10**(-3)
+		
+		Rate = GSrate * (a0 + a1*Temp + a2*Temp**2 + a3*Temp**3 + a4*Temp**4)
+		
+		return Rate
+		
+	def CF88Rate(self, Temp):
+	
+		TA = Temp/(1 + 6.12*(10**(-2))*Temp + 1.30*(10**(-2))*(Temp**(5/3))/(1 + 6.12*(10**(-2))*Temp)**(2/3))
+	
+		a0 = 3.25*10**(19)
+		a1 = 5.31
+		a2 = 0.544
+		a3 = -0.0523
+		a4 = -43.176
+		a5 = -47.969
+		
+		Rate = a0 * (a1 + a2*Temp + a3*Temp**2) * ((TA**(5/6))/(Temp**(3/2))) * math.exp(a4/TA**(1/3) + a5/Temp)
+		
+		return Rate
+		
+		
+	# Comparison of our reaction rate and reaclib. Will customize for unspecified number of comparisons if the time comes	
+	def ReactionRatePlot(self, TimeInverted = True):
+	
+		plt.rcParams.update({'font.size': 22})
+	
+		if TimeInverted:
+		
+			MaxTemp = 3
+			MinTemp = 0.9
+			
+		else:
+		
+			MaxTemp = 3
+			MinTemp = 0.9
+			
+	
+		Temperature = [MinTemp + 0.01*i for i in range(0, int(((MaxTemp-MinTemp)*100)) + 1)]
+		
+		ReactionRate = [self.ReactionRateIntegration(Temperature[i], TimeInverted = TimeInverted) for i in range(len(Temperature))]
+		
+		NacreRR = [self.NacreRate(Temperature[i]) for i in range(len(Temperature))]
+		
+		ThermalizedNacreRR = [self.ThermalizedNacreRate(Temperature[i]) for i in range(len(Temperature))]
+		
+		CF88 = [self.CF88Rate(Temperature[i]) for i in range(len(Temperature))]
+		
 		plt.plot(Temperature, ReactionRate, color='r', marker='.', markersize=1, label='Activation Measurement')
 		
-		plt.plot(Temperature, ReacLibRate, color='b', marker='.', markersize=1, label='ReacLib')
+		if TimeInverted:
 		
+			ReacLibInverse = [self.ReacLibInverseReac(Temperature[i]) for i in range(len(Temperature))]
+			
+			plt.plot(Temperature, NacreRR, color='b', marker='.', markersize=1, label='NACRE Rate')
+			
+			plt.plot(Temperature, ThermalizedNacreRR, color='k', marker='.', markersize=1, label='Thermalized NACRE Rate')
+			
+			plt.plot(Temperature, ReacLibInverse, color='g', marker='.', markersize=1, label='REACLIB')
+			
+			plt.plot(Temperature, CF88, color='m', marker='.', markersize=1, label='CF88')
+			
+			plt.title('$^{20}$Ne(p,$\\alpha$)$^{17}F$ Reaction Rate')
+			
+		else:
+		
+			ConvertedNacreRR = [NacreRR[i]*self.ReactionRateConersion(NacreTemp[i]) for i in range(len(NacreTemp))]
+			
+			ReacLibRate = [self.ReacLibForwardReac(Temperature[i]) for i in range(len(Temperature))]
+		
+			plt.plot(Temperature, ConvertedNacreRR, color='b', marker='.', markersize=1, label='Converted NACRE Rate')
+			
+			plt.plot(Temperature, ReacLibRate, color='g', marker='.', markersize=1, label='ReacLib')
+		
+			plt.title('$^{17}F$($\\alpha$,p)$^{20}$Ne Reaction Rate')
+			
+			
 		plt.yscale('log')
-		
 		
 		plt.xlabel('Temperature (GK)')
 		
 		plt.ylabel('Reaction Rate ($cm^3 mol^{-1} sec^{-1}$)')
-		
-		plt.title('$^{17}F$($\\alpha$,p)$^{20}$Ne Reaction Rate')
 		
 		plt.legend()
 		
@@ -1229,10 +1530,4 @@ class ReactionRate:
 		return 0	
 	
 			
-			
-			
-			
-			
-			
-			
-			
+		
