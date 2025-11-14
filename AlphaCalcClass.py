@@ -236,7 +236,8 @@ class BeamCurrentCalc:
 		
 		AverageCurrentTargetTimeError = sum(CurrentTargetTimeError) / len(CurrentTargetTimeError)
 		
-		HydrogenAtoms = round((target_thickness/Constants().MethyleneMolarMass)*Constants().Mol*2, 3)
+		#HydrogenAtoms = round((target_thickness/Constants().MethyleneMolarMass)*Constants().Mol*2, 3)
+		HydrogenAtoms = round((target_thickness/Constants().PolypropelenMolarMass)*Constants().Mol*6, 3)
 				
 		AverageBeamCurrent = round((AverageCurrentTargetTime / (runtime*HydrogenAtoms*Constants().MilliBarnToCmSquared))*(Constants().NeChargeState*Constants().ElectronCharge*10**12), 2)
 		AverageBeamCurrentError = round((AverageCurrentTargetTimeError /(runtime*HydrogenAtoms*Constants().MilliBarnToCmSquared))*(Constants().NeChargeState*Constants().ElectronCharge*10**12), 2)
@@ -366,7 +367,7 @@ class BeamCurrentCalc:
 		
 			return SubRingEff
 			
-	# retreive center of mass angles for each ring
+	# retreive center of mass angles for each ring for 20Ne(p,a) ground state
 	def GetCMAngles(self, BeamEnergy):
 	
 	
@@ -418,7 +419,7 @@ class BeamCurrentCalc:
 	
 	
 	
-	# calculate solid angle of individual rings or group of them in center of mass frame
+	# calculate solid angle of individual rings or group of them in center of mass frame for 20Ne(p,a) in either excited stateor ground state.
 	def SolidAngleCalc(self, BeamEnergy, StartRing, StopRing, ExState = False, RingByRing = False):
 		
 		if ExState:
@@ -1056,7 +1057,7 @@ class CSCalc:
 			
 			RatioError = GsExRatio * np.sqrt( (GsCountsError / GsAlphas)**2 + (ExCountsError / ExAlphas)**2 )
 			
-			CoMEnergy = BeamEnergy*(Constants().HMass / (Constants().HMass + Constants().NeMass))
+			CoMEnergy = (BeamEnergy  - BeamCurrentCalc().GetEnergyLoss(BeamEnergy)) * (Constants().HMass / (Constants().HMass + Constants().NeMass))
 			
 			return round(CoMEnergy, 2), GsExRatio, RatioError, GsSolidAngles
 		
@@ -1097,7 +1098,7 @@ class CSPlot:
 		
 	
 	# Read AZURE extrapolation file. Outputs to mB
-	def ExtrapReader(self, FilePath, BeamEnergy, Yield = False):
+	def ExtrapReader(self, FilePath, BeamEnergy, Yield = False, ExEnergy=False):
 	
 		ExtrapFile = open(FilePath)
 	
@@ -1115,19 +1116,29 @@ class CSPlot:
 			if newline == []:
 				break
 			else:
-				Energy.append(float(newline[1]))
+				if ExEnergy:
+					Energy.append(float(newline[1]))
+				else:
+					Energy.append(float(newline[0]))
+					
 				ExtrapAngle.append(float(newline[2]))
+				
 				if Yield:
 					ExtrapCS.append(float(newline[3])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().MilliBarnToCmSquared))
 					SFactor.append(float(newline[4])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().MilliBarnToCmSquared))
 				else:	
 					ExtrapCS.append(float(newline[3])*1000)
 					SFactor.append(float(newline[4])*1000)
+					
+		EnergyFix = [Energy[i] for i in range(len(Energy)) if not math.isnan(ExtrapCS[i])]
+		AngleFix = [ExtrapAngle[i] for i in range(len(ExtrapAngle)) if not math.isnan(ExtrapCS[i])]
+		CSFix = [ExtrapCS[i] for i in range(len(ExtrapCS)) if not math.isnan(ExtrapCS[i])]
+		SFactoFix = [SFactor[i] for i in range(len(SFactor)) if not math.isnan(ExtrapCS[i])]
 				
-		return Energy, ExtrapAngle, ExtrapCS, SFactor
+		return EnergyFix, AngleFix, CSFix, SFactoFix
 		
 		
-	def FitReader(self, FilePath, BeamEnergy, Yield=False):
+	def FitReader(self, FilePath, BeamEnergy, Yield=False, ExEnergy=False):
 	
 		FitFile = open(FilePath)
 		
@@ -1140,27 +1151,36 @@ class CSPlot:
 		FitData = []
 		Energy = []
 		Angle = []
+		SFactor = []
 		
 		for line in FitLines:
 			newline = line.split()
 			if newline == []:
 				break
 			else:
-				Energy.append(float(newline[1]))
+				if ExEnergy:
+					Energy.append(float(newline[1]))
+				else:
+					Energy.append(float(newline[0]))
+					
 				Angle.append(float(newline[2]))
+				
 				if Yield:
 					FitData.append(float(newline[3])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().MilliBarnToCmSquared))
 					DataCS.append(float(newline[5])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().MilliBarnToCmSquared))
 					DataError.append(float(newline[6])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().MilliBarnToCmSquared))
+					SFactor.append(float(newline[4])/(AZUREWriter().GetTargetAtoms(BeamEnergy))/(Constants().MilliBarnToCmSquared))
 				else:
 					FitData.append(float(newline[3])*1000)
 					DataCS.append(float(newline[5])*1000)
 					DataError.append(float(newline[6])*1000)
+					SFactor.append(float(newline[4])*1000)
 					
 		BeamEnergySorted = []
 		PAlphaDataSorted = []
 		PAlphaErrorSorted = []
 		FitDataSorted = []
+		SFactorSorted = []
 		
 		i=0
 		while True:
@@ -1173,11 +1193,13 @@ class CSPlot:
 				PAlphaDataSorted.append(DataCS[i])
 				PAlphaErrorSorted.append(DataError[i])
 				FitDataSorted.append(FitData[i])
+				SFactorSorted.append(SFactor[i])
 		
 				Energy.pop(i)
 				DataCS.pop(i)
 				DataError.pop(i)
 				FitData.pop(i)
+				SFactor.pop(i)
 		
 				i=0
 			else:
@@ -1230,13 +1252,13 @@ class CSPlot:
 		
 		
 		TitleString = 'p($^{}$'.format('2') + '$^{}$'.format('0') + 'Ne,${}$'.format('\\alpha')  + ')$^{}$'.format('1') + '$^{}$'.format('7') + 'F'
-		DiffCSString = '$\left(\\frac{d \sigma}{d \Omega}\\right)_{CM}$'
-		DiffCSUnit = '$\left(\\frac{mB}{str}\\right)$'
+		DiffCSString = '$\\left(\\frac{d \\sigma}{d \\Omega}\\right)_{CM}$'
+		DiffCSUnit = '$\\left(\\frac{mB}{str}\\right)$'
 		Angle = '$\\theta_{CM}$'
 		
 		plt.title(TitleString + ' Differential Cross Section ' + str(BeamEnergy) + ' MeV', fontsize=24)
 		plt.ylabel(DiffCSString + DiffCSUnit, fontsize=24)
-		plt.xlabel(Angle + '($^{\circ}$)', fontsize=24)
+		plt.xlabel(Angle + '($^{\\circ}$)', fontsize=24)
 		plt.yticks(fontsize=20);
 		plt.xticks(fontsize=20);
 		plt.gca().invert_xaxis()
@@ -1465,10 +1487,10 @@ class ReactionRate:
 	# Uses reciprocity theorem to convert 20Ne(p,a) reaction cross section to 17F(a,p) reaction cross section. Will add customizability if I need more file flexibility.	
 	def GetReactionData(self, FilePath, TimeInverted = False):
 		
-		ExtrapEnergy, ExtrapAngle, ExtrapCS, SFactor = CSPlot().ExtrapReader(FilePath, BeamEnergy='Activation', Yield=False)
+		ExtrapEnergy, Angle, FitDataSorted, ExtrapCS, PAlphaErrorSorted, SFactorSorted = CSPlot().FitReader(FilePath, BeamEnergy='Activation', Yield=False, ExEnergy=False)
 		
 		# The Extrap reader outputs in mB, we need it in B for the integration
-		ExtrapCS = np.array(ExtrapCS)/1000
+		#ExtrapCS = np.array(ExtrapCS)/1000
 		
 		if TimeInverted:
 		
@@ -1508,35 +1530,33 @@ class ReactionRate:
 		#print(-Constants().QVal / (Constants().Boltzmann))
 		
 		return ConversionFactor
-			
-			
-			
-	# Takes Temp in GK, energies in MeV to calculate reaction rate
-	def ReactionRateIntegration(self, FilePath, Temp, TimeInverted=False):
 		
-		EnergyCoM, CrossSection = self.GetReactionData(FilePath, TimeInverted = TimeInverted)
+	def HeFReacRate(self, Temp, ExtrapFilePath):
+	
+		EnergyCoM, Angle, CrossSection, SFactor = CSPlot().ExtrapReader(ExtrapFilePath, BeamEnergy='Activation', Yield=False, ExEnergy=False)
 		
-		NeHReducedMass = (Constants().NeMass*Constants().HMass)/(Constants().NeMass + Constants().HMass)
-		
+		CrossSection = np.array(CrossSection)/1000
+	
 		HeFReducedMass = (Constants().FMass*Constants().HeMass)/(Constants().FMass + Constants().HeMass)
-				
-		if TimeInverted:
-
-			# Illiadis equation 3.10, takes temperature in GK
-			ConstantFactor = ((3.7318*10**10) / Temp**(3/2)) * (1 / np.sqrt(NeHReducedMass)) 
-			
-		else: 
-					
-			# Illiadis equation 3.10, takes temperature in GK
-			ConstantFactor = ((3.7318*10**10) / Temp**(3/2)) * (1 / np.sqrt(HeFReducedMass))
+		ConstantFactor = ((3.7318*10**10) / Temp**(3/2)) * (1 / np.sqrt(HeFReducedMass))
+		RectangularArea = [CrossSection[j] * EnergyCoM[j] * math.exp(-(EnergyCoM[j]/(Constants().Boltzmann * Temp))) * (EnergyCoM[j+1] - EnergyCoM[j]) for j in range(0, len(EnergyCoM)-1)]
+		Integral = ConstantFactor * sum(RectangularArea)
+	
+		return Integral
 		
-		RectangularArea = [CrossSection[j] * EnergyCoM[j] * math.exp(-(EnergyCoM[j]/(Constants().Boltzmann * Temp))) * (EnergyCoM[j+1] - EnergyCoM[j]) for j in range(0, len(EnergyCoM)-1)]	
+	def NePReacRate(self, Temp, ExtrapFilePath):
+	
+		EnergyCoM, Angle, CrossSection, SFactor = CSPlot().ExtrapReader(ExtrapFilePath, BeamEnergy='Activation', Yield=False, ExEnergy=False)
 		
-		ReactionRate = ConstantFactor * sum(RectangularArea)	
+		CrossSection = np.array(CrossSection)/1000
+	
+		NePReducedMass = (Constants().NeMass*Constants().HMass)/(Constants().NeMass + Constants().HMass)
+		ConstantFactor = ((3.7318*10**10) / Temp**(3/2)) * (1 / np.sqrt(NePReducedMass))
+		RectangularArea = [CrossSection[j] * EnergyCoM[j] * math.exp(-(EnergyCoM[j]/(Constants().Boltzmann * Temp))) * (EnergyCoM[j+1] - EnergyCoM[j]) for j in range(0, len(EnergyCoM)-1)]
 		
-		#print(EnergyCoM)
-		
-		return ReactionRate
+		Integral = ConstantFactor * sum(RectangularArea)
+	
+		return Integral	
 		
 		
 		
@@ -1703,84 +1723,6 @@ class ReactionRate:
 		
 		return NePRate
 		
-		
-		
-	'''	
-	# Comparison of our reaction rate and reaclib. It seems like these are the only plots we care about, I don't really see where we go down a path of wanting a lot of customization. So, I will
-	# leave the method as is for now, but I can go through and allow it to take an unspecified number of entries and group them if needed.	
-	def ReactionRatePlot(self, FilePath, MinTemp, MaxTemp, TimeInverted = False):
-	
-		plt.rcParams.update({'font.size': 22})
-			
-	
-		Temperature = [MinTemp + 0.01*i for i in range(0, int(((MaxTemp-MinTemp)*100)) + 1)]
-		
-		ReactionRate = [self.ReactionRateIntegration(FilePath, Temperature[i], TimeInverted = TimeInverted) for i in range(len(Temperature))]
-		
-		ExReactionRate = [self.ReactionRateIntegration(FilePath, Temperature[i], TimeInverted = TimeInverted) for i in range(len(Temperature))]
-		
-		NacreRR = [self.NacreRate(Temperature[i]) for i in range(len(Temperature))]
-		
-		ThermalizedNacreRR = [self.ThermalizedNacreRate(Temperature[i]) for i in range(len(Temperature))]
-		
-		CF88 = [self.CF88Rate(Temperature[i]) for i in range(len(Temperature))]
-		
-		# There is something fishy going on with this S-factor calculation. I'll need to look into it more.
-		SFactorRR = [self.SFactorRate(FilePath, Temperature[i]) for i in range(len(Temperature))]
-		
-		plt.plot(Temperature, ReactionRate, color='r', marker='.', markersize=1, label='Activation Measurement')
-		
-		if TimeInverted:
-		
-			ReacLibInverse = [self.ReacLibInverseReac(Temperature[i]) for i in range(len(Temperature))]
-			
-			ConvertedSFactorRate = [SFactorRR[i]/self.ReactionRateConersion(Temperature[i]) for i in range(len(Temperature))]
-			
-			plt.plot(Temperature, NacreRR, color='b', marker='.', markersize=1, label='NACRE Rate')
-			
-			plt.plot(Temperature, ThermalizedNacreRR, color='k', marker='.', markersize=1, label='Thermalized NACRE Rate')
-			
-			#plt.plot(Temperature, ReacLibInverse, color='g', marker='.', markersize=1, label='REACLIB')
-			
-			#plt.plot(Temperature, CF88, color='m', marker='.', markersize=1, label='CF88')
-			
-			plt.plot(Temperature, ConvertedSFactorRate, color='orange', marker='.', markersize=1, label='Converted S-Factor NACRE')
-			
-			plt.title('$^{20}$Ne(p,$\\alpha$)$^{17}F$ Reaction Rate')
-			
-		else:
-		
-			ThermalizedRRconversion = [self.ThermalizedConversionFactor(Temperature[i]) for i in range(len(Temperature))]
-			
-			ThermalizedForwardReaction = [ThermalizedRRconversion[i]*ThermalizedNacreRR[i] for i in range(len(ThermalizedNacreRR))]
-			
-			ConvertedNacreRR = [NacreRR[i]*self.ReactionRateConersion(Temperature[i]) for i in range(len(Temperature))]
-			
-			ReacLibRate = [self.ReacLibForwardReac(Temperature[i]) for i in range(len(Temperature))]
-		
-			plt.plot(Temperature, ConvertedNacreRR, color='g', marker='.', markersize=1, label='NACRE Ground State Rate')
-			
-			#plt.plot(Temperature, ReacLibRate, color='b', marker='.', markersize=1, label='ReacLib')
-			
-			plt.plot(Temperature, ThermalizedForwardReaction, color='b', marker='.', markersize=1, label='NACRE Thermalized Rate')
-			
-			plt.plot(Temperature, SFactorRR, color='orange', marker='.', markersize=1, label='NACRE S-Factor')
-		
-			plt.title('$^{17}F$($\\alpha$,p)$^{20}$Ne Reaction Rate')
-			
-			
-		plt.yscale('log')
-		
-		plt.xlabel('Temperature (GK)')
-		
-		plt.ylabel('Reaction Rate ($cm^3 mol^{-1} sec^{-1}$)')
-		
-		plt.legend()
-		
-		plt.show()
-		
-		return 0	
-	'''
 	
 	# calculate rtt from NACRE
 	def ThermalizationFactor(self, Temperature):
